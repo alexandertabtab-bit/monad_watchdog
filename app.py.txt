@@ -1,0 +1,147 @@
+import streamlit as st
+import requests
+
+# -----------------------------------------------------------------------------
+# 1. LIVE SEARCH & INGREDIENT FETCHING (Open Beauty Facts API)
+# -----------------------------------------------------------------------------
+@st.cache_data(ttl=300)
+def search_open_beauty_facts(query):
+    """Searches Open Beauty Facts API and returns matching products for suggestions."""
+    if not query or len(query.strip()) < 2:
+        return []
+    
+    url = f"https://world.openbeautyfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=10"
+    headers = {"User-Agent": "MonadWatchdog - Research/Educational - v1.0"}
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            products = data.get("products", [])
+            
+            results = []
+            for p in products:
+                name = p.get("product_name") or p.get("product_name_en")
+                brands = p.get("brands", "")
+                ingredients = p.get("ingredients_text") or p.get("ingredients_text_en")
+                
+                if name:
+                    display_label = f"{brands} - {name}" if brands else name
+                    results.append({
+                        "label": display_label,
+                        "ingredients": ingredients or "INCI list not specified on label."
+                    })
+            return results
+    except Exception:
+        pass
+    return []
+
+
+# -----------------------------------------------------------------------------
+# 2. MONAD HARDCODED BENCHMARKS (For General Category Searches)
+# -----------------------------------------------------------------------------
+MONAD_FALLBACKS = {
+    "topical sunscreen": {
+        "roi_rating": "High ROI",
+        "roi_explanation": "Prevents thousands in future dermatological repairs and stops up to 80% of UV photoaging.",
+        "pricing": {"retail": "$18.00 (50ml)", "daily": "$0.50", "time": "2 mins"},
+        "permanence": "Temporary (Requires daily reapplication)",
+        "actives": "Zinc Oxide, Titanium Dioxide, Avobenzone",
+        "pros": ["Prevents collagen breakdown", "Halts dark spot formation", "Fragrance-free options"],
+        "cons": ["Washes off with sweat", "Requires strict daily discipline"],
+        "truth": "UV protection drops after 2 hours. Stopping exposes cells to immediate photo-damage."
+    },
+    "ingestible collagen peptides": {
+        "roi_rating": "High ROI",
+        "roi_explanation": "Builds structural dermal thickness and joint cartilage over time.",
+        "pricing": {"retail": "$30.00 (450g)", "daily": "$1.00", "time": "1 min"},
+        "permanence": "Semi-Permanent (Builds dermal density, decays if stopped)",
+        "actives": "Hydrolyzed Collagen Peptides (Types I & III)",
+        "pros": ["Improves skin elasticity", "Zero surface skin irritation"],
+        "cons": ["Takes 8-12 weeks for visible results", "Requires ongoing daily investment"],
+        "truth": "Natural collagen drops ~1% per year starting at 25. Stopping causes levels to decay back to baseline."
+    }
+}
+
+
+# -----------------------------------------------------------------------------
+# 3. STREAMLIT WEB INTERFACE
+# -----------------------------------------------------------------------------
+st.set_page_config(page_title="Monad Watchdog", page_icon="⚡", layout="centered")
+
+st.title("⚡ MONAD: Biological Product Watchdog")
+st.caption("Type any brand, product, or ingredient name to run an analysis.")
+
+st.markdown("""
+> **Disclaimer:** *Monad provides research-backed biological ingredient analysis and educational metrics. It does not constitute official legal or medical diagnosis.*
+""")
+
+# Search Input
+user_query = st.text_input("🔍 Search any product or brand:", placeholder="Type 'cerave', 'sunscreen', 'la roche posay'...")
+
+if user_query:
+    st.divider()
+    clean_query = user_query.strip().lower()
+
+    # Check for hardcoded benchmarks first
+    matched_benchmark = None
+    for key in MONAD_FALLBACKS:
+        if key in clean_query:
+            matched_benchmark = key
+            break
+
+    if matched_benchmark:
+        data = MONAD_FALLBACKS[matched_benchmark]
+        st.subheader(f"📊 Benchmark Category: {matched_benchmark.title()}")
+        
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Longevity ROI", data["roi_rating"])
+        col2.metric("Daily Cost", data["pricing"]["daily"])
+        col3.metric("Daily Effort", data["pricing"]["time"])
+        
+        st.info(f"**ROI Logic:** {data['roi_explanation']}")
+        st.write(f"**Key Actives:** {data['actives']}")
+        st.error(f"**🔥 BRUTAL TRUTH:** {data['truth']}")
+
+    else:
+        # Live Open Beauty Facts Lookup
+        with st.spinner("Searching database for matches..."):
+            suggestions = search_open_beauty_facts(user_query)
+
+        if suggestions:
+            # Dropdown menu with suggestions!
+            options = [s["label"] for s in suggestions]
+            selected_product_name = st.selectbox(
+                f" Found {len(suggestions)} matches for '{user_query}'. Select your product:",
+                options=options
+            )
+
+            # Retrieve selected product details
+            selected_data = next(s for s in suggestions if s["label"] == selected_product_name)
+
+            st.markdown("---")
+            st.success(f"**Selected Product:** {selected_product_name}")
+            
+            st.markdown("### 🔬 INCI Ingredient Breakdown")
+            st.info(selected_data["ingredients"])
+
+            # Biological Safety Analysis
+            st.markdown("### 🛡️ Watchdog Biological Check")
+            ing_text = selected_data["ingredients"].lower()
+            
+            flags = []
+            if "fragrance" in ing_text or "parfum" in ing_text:
+                flags.append("⚠️ **Fragrance / Parfum detected:** Potential contact allergen for sensitive skin.")
+            if "alcohol denat" in ing_text or "sd alcohol" in ing_text:
+                flags.append("⚠️ **Drying Alcohol detected:** Can strip skin barrier with frequent use.")
+            if "niacinamide" in ing_text or "zinc" in ing_text or "ceramide" in ing_text:
+                flags.append("✅ **Barrier Support Actives detected:** Contains proven biological restorative ingredients.")
+            
+            if flags:
+                for flag in flags:
+                    st.write(flag)
+            else:
+                st.write("ℹ️ Standard cosmetic formula. No immediate barrier irritants flagged.")
+
+        else:
+            st.error(f"No products found for '{user_query}'. Try typing a broader brand name like **'CeraVe'** or **'Nivea'**.")
