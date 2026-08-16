@@ -259,7 +259,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         }},
         "pros": ["Pro tailored to profile 1", "Pro tailored to profile 2"],
         "cons": ["Con/Caution tailored to profile 1", "Con/Caution tailored to profile 2"],
-       "spectrum": {
+        "spectrum": {{
             "Day 1": "Immediate reaction, pH adjustment, and sensory feel.",
             "Day 3": "Early barrier response and hydration shift.",
             "Day 7": "End of first week adaptation.",
@@ -275,8 +275,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             "Year 20": "Two-decade biological legacy on skin elasticity.",
             "Year 50": "Half-century cumulative exposure outcomes.",
             "Year 100": "Theoretical lifelong maximum preservation and cellular legacy."
-        },
-        
+        }},
         "medical_sources": [
             "Cosmetic Ingredient Review (CIR) Safety Assessment",
             "PubChem Compound Database (NIH)",
@@ -298,6 +297,8 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     except Exception as e:
         st.error(f"AI Generation Error: {e}")
         return None
+        
+    
 
 @st.cache_data(show_spinner=False)
 def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
