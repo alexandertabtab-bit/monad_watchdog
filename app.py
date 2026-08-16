@@ -5,87 +5,46 @@ from groq import Groq
 import streamlit.components.v1 as components
 
 # -----------------------------------------------------------------------------
-# 1. SETUP & GUARANTEED FULL-SCREEN ANIMATED BACKGROUND (PURE CSS + CANVAS)
+# 1. SETUP & GUARANTEED PURE CSS ANIMATED NATURE BACKGROUND
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
-# Inject Background Engine directly into Parent Document DOM + Pure CSS Gradient
-components.html("""
-<script>
-    // Access parent window to bypass Streamlit iframe isolation
-    const parentDoc = window.parent.document;
-    
-    if (!parentDoc.getElementById('nature-bg-canvas')) {
-        const container = parentDoc.createElement('div');
-        container.id = 'canvas-container';
-        container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;';
-        
-        const canvas = parentDoc.createElement('canvas');
-        canvas.id = 'nature-bg-canvas';
-        container.appendChild(canvas);
-        parentDoc.body.prepend(container);
-
-        const ctx = canvas.getContext('2d');
-        let width = canvas.width = window.parent.innerWidth;
-        let height = canvas.height = window.parent.innerHeight;
-
-        window.parent.addEventListener('resize', () => {
-            width = canvas.width = window.parent.innerWidth;
-            height = canvas.height = window.parent.innerHeight;
-        });
-
-        const particles = [];
-        const colors = ['rgba(244, 114, 182, ', 'rgba(56, 189, 248, ', 'rgba(168, 85, 247, '];
-
-        for (let i = 0; i < 50; i++) {
-            particles.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                radius: Math.random() * 3.5 + 1,
-                color: colors[Math.floor(Math.random() * colors.length)],
-                alpha: Math.random() * 0.6 + 0.2,
-                vx: (Math.random() - 0.5) * 0.5,
-                vy: -Math.random() * 0.6 - 0.2
-            });
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-            particles.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                if (p.y < -10) p.y = height + 10;
-                if (p.x < -10) p.x = width + 10;
-                if (p.x > width + 10) p.x = -10;
-
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                ctx.fillStyle = p.color + p.alpha + ')';
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = p.color + '0.8)';
-                ctx.fill();
-            });
-            requestAnimationFrame(animate);
-        }
-        animate();
-    }
-</script>
-""", height=0)
-
-# CSS Animation Fallback & Glassmorphism Theme
+# Pure CSS Animated Background (Aurora Mesh + Floating Particle Glows)
 st.markdown("""
 <style>
-    @keyframes deepAurora {
+    /* Aurora Mesh Animation Base */
+    @keyframes auroraShift {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
 
-    /* Animated Aurora Background + Full Transparency for Floating Canvas */
+    /* Floating Bioluminescent Particle Nodes */
+    @keyframes floatParticles {
+        0% {
+            background-position: 0px 0px, 0px 0px, 0px 0px;
+        }
+        50% {
+            background-position: 300px -300px, -200px 400px, 150px -200px;
+        }
+        100% {
+            background-position: 600px -600px, -400px 800px, 300px -400px;
+        }
+    }
+
+    /* Apply Full Screen Animation directly to Streamlit App Layer */
     .stApp {
-        background: linear-gradient(-45deg, #090d16, #1e1b4b, #0f2b26, #1a0933) !important;
-        background-size: 400% 400% !important;
-        animation: deepAurora 20s ease infinite !important;
+        background: 
+            radial-gradient(circle at 20% 20%, rgba(244, 114, 182, 0.12) 0%, transparent 40%),
+            radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
+            radial-gradient(2px 2px at 40px 60px, rgba(244, 114, 182, 0.8), rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 150px 180px, rgba(56, 189, 248, 0.7), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 280px 80px, rgba(168, 85, 247, 0.8), rgba(0,0,0,0)),
+            radial-gradient(4px 4px at 350px 320px, rgba(244, 114, 182, 0.6), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 480px 220px, rgba(56, 189, 248, 0.75), rgba(0,0,0,0)),
+            linear-gradient(-45deg, #090d16, #161b2e, #0f2b26, #1a0933) !important;
+        background-size: 100% 100%, 100% 100%, 600px 600px, 500px 500px, 700px 700px, 600px 600px, 550px 550px, 400% 400% !important;
+        animation: floatParticles 25s linear infinite, auroraShift 18s ease infinite !important;
         color: #e2e8f0;
     }
     
@@ -97,7 +56,7 @@ st.markdown("""
         border-radius: 14px !important;
     }
     
-    /* Input Form Fields */
+    /* Form Inputs */
     input, select, textarea {
         background-color: rgba(30, 41, 59, 0.85) !important;
         color: #f8fafc !important;
@@ -120,7 +79,7 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    /* Titles and Accents */
+    /* Glowing Titles */
     h1, h2, h3 {
         color: #f472b6 !important;
         text-shadow: 0 0 12px rgba(244, 114, 182, 0.4);
