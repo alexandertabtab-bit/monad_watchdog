@@ -9,28 +9,23 @@ from groq import Groq
 # -----------------------------------------------------------------------------
 
 
+
 st.set_page_config(
     page_title="Monad Watchdog", page_icon="🌸", layout="centered"
 )
 
-# CSS to fix mobile pull-to-refresh and compact the camera view
+# CSS to fix mobile pull-to-refresh
 st.markdown(
     """
     <style>
     html, body, [data-testid="stAppViewContainer"] {
         overscroll-behavior-y: none !important;
     }
-    /* Restricts camera input height so it doesn't stretch huge */
-    [data-testid="stCameraInput"] video {
-        max-height: 250px !important;
-        object-fit: cover;
-    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# Navigation Tabs at the top
 tab1, tab2 = st.tabs(
     ["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"]
 )
@@ -38,48 +33,30 @@ tab1, tab2 = st.tabs(
 with tab1:
     st.markdown("### 🛍️ Product Analysis & Lookup")
 
-    # 1. Search Bar / Manual Barcode Input on top
-    manual_barcode = st.text_input(
-        "Enter Barcode Number:",
-        placeholder="Type or scan barcode digits...",
+    # 1. Search Bar is the FIRST thing at the top
+    search_query = st.text_input(
+        "Search Product or Enter Barcode:",
+        placeholder="Type product name or barcode number...",
     )
 
-    st.markdown("---")
-
-    # 2. Compact Option: Upload an image or use a smaller file/camera picker
-    st.markdown("### 📸 Or Scan / Upload Barcode")
-    uploaded_file = st.file_uploader(
-        "Upload barcode image (PNG, JPG)", type=["png", "jpg", "jpeg"]
-    )
-
-    # Action Button
     search_clicked = st.button(
-        "Analyze Product", type="primary", use_container_width=True
+        "Search Product", type="primary", use_container_width=True
     )
 
     st.markdown("---")
 
-    # 3. Results Section (Appears right below in an organized block)
-    st.markdown("### 📊 Results & Info")
+    # 2. Results & Info Section appears below
+    st.markdown("### 📊 Results & Product Info")
 
-    if manual_barcode:
-        st.success(f"Displaying results for barcode: {manual_barcode}")
-        # Insert your lookup/analysis results components here
-
-    elif uploaded_file:
-        st.success("Barcode image uploaded successfully!")
-        # Insert your image processing results components here
-
+    if search_query:
+        st.success(f"Showing analysis results for: {search_query}")
+        # Insert your product info, ingredients, and search suggestions here
     else:
-        st.info(
-            "Enter a barcode number above or upload an image to see product insights."
-        )
+        st.info("Type a product name or barcode above to get started.")
 
 with tab2:
     st.markdown("### Routine Stacking Compatibility")
     st.info("Routine compatibility tools will appear here.")
-
-
 
 # Your existing code continues below...
 
