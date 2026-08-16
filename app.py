@@ -1,20 +1,17 @@
 import json
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 from groq import Groq
 
 # -----------------------------------------------------------------------------
-# 1. PAGE CONFIG & API KEYS
+# 1. PAGE CONFIG & API CLIENT INITIALIZATION
 # -----------------------------------------------------------------------------
-
-
-import streamlit as st
-
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
+groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
 
+# Custom Pastel Styling
 st.markdown(
     """
     <style>
@@ -61,99 +58,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab1, tab2 = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"])
-
-with tab1:
-    st.markdown("### 🌸 MONAD: Biological Watchdog")
-    st.caption("Multi-source database engine with personalized clinical forecasting.")
-
-    with st.expander("ℹ️ Medical Disclaimer"):
-        st.write(
-            "Monad provides research-backed biological ingredient analysis for educational purposes. Consult a dermatologist for active clinical treatment."
-        )
-
-    st.markdown("---")
-
-    st.markdown("### 🔍 Search & Product Input")
-
-    with st.container():
-        search_query = st.text_input(
-            "Search Product:",
-            placeholder="Type brand name, product name, or barcode digits...",
-        )
-
-        with st.expander("📸 Optional: Scan Barcode via Camera"):
-            camera_image = st.camera_input("Take a photo of the barcode", label_visibility="collapsed")
-
-        st.markdown("#### ⚙️ Customize Your Skin Profile")
-        col_skin1, col_skin2 = st.columns(2)
-        with col_skin1:
-            skin_type = st.selectbox(
-                "Skin Type:",
-                ["Balanced / Normal", "Dry", "Oily", "Combination", "Sensitive"],
-            )
-        with col_skin2:
-            barrier_condition = st.selectbox(
-                "Current Barrier Condition:",
-                ["Healthy / Resilient", "Compromised / Irritated", "Dehydrated"],
-            )
-
-        st.markdown("")
-        search_triggered = st.button("Run Product Analysis", type="primary", use_container_width=True)
-
-    st.markdown("---")
-
-    st.markdown("### 📊 Results & Product Info")
-
-    if search_triggered:
-        if not GROQ_KEY:
-            st.error("⚠️ Groq API Key is missing. Please add it to your Streamlit Cloud Secrets.")
-        else:
-            if search_query:
-                st.success(f"Analyzing product or barcode: **{search_query}**")
-            elif camera_image:
-                st.success("Analyzing captured barcode image...")
-            else:
-                st.warning("Please enter a product name/barcode or scan an image to run analysis.")
-    else:
-        st.info("👆 Enter a product name or barcode above and click 'Run Product Analysis' to view your insights.")
-
-with tab2:
-    st.markdown("### Routine Stacking Compatibility")
-    st.info("Routine compatibility tools will appear here.")
-
-    # ==========================================
-    # SECTION 2: RESULTS & PRODUCT INFO SECTION
-    # ==========================================
-    st.markdown("### 📊 Results & Product Info")
-
-    if search_triggered:
-        if not GROQ_KEY:
-            st.error(
-                "⚠️ Groq API Key is missing. Please add it to your Streamlit Cloud Secrets."
-            )
-        else:
-            if search_query:
-                st.success(
-                    f"Analyzing product or barcode: **{search_query}**"
-                )
-            elif camera_image:
-                st.success("Analyzing captured barcode image...")
-            else:
-                st.warning(
-                    "Please enter a product name/barcode or scan an image to run analysis."
-                )
-    else:
-        st.info(
-            "👆 Enter a product name or barcode above and click 'Run Product Analysis' to view your insights."
-        )
-
-with tab2:
-    st.markdown("### Routine Stacking Compatibility")
-    st.info("Routine compatibility tools will appear here.")
-
 # -----------------------------------------------------------------------------
-# 3. INGREDIENT RETRIEVAL PIPELINE
+# 2. INGREDIENT RETRIEVAL PIPELINE
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300)
 def fetch_from_open_beauty_facts(query):
@@ -205,7 +111,6 @@ def multi_source_search(query):
 
 def parse_ingredient_badges(ingredients_text):
     text_lower = ingredients_text.lower()
-    
     replenishing = ["ceramide", "hyaluronic", "glycerin", "panthenol", "squalane", "centella", "allantoin", "niacinamide", "cholesterol", "madecassoside"]
     actives = ["retinol", "retinal", "glycolic", "salicylic", "lactic", "ascorbic", "benzoyl", "azelaic", "adapalene", "tretinoin"]
     irritants = ["fragrance", "parfum", "alcohol denat", "linalool", "limonene", "citral", "eugenol", "essential oil", "menthol", "eucalyptus"]
@@ -217,7 +122,7 @@ def parse_ingredient_badges(ingredients_text):
     return found_replenish, found_actives, found_irritants
 
 # -----------------------------------------------------------------------------
-# 4. AI ENGINES
+# 3. AI ENGINES
 # -----------------------------------------------------------------------------
 def ai_analyze_product(product_name, ingredients, skin_profile):
     if not groq_client:
@@ -257,7 +162,6 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         ]
     }}
     """
-    
     try:
         response = groq_client.chat.completions.create(
             messages=[
@@ -292,7 +196,6 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     3. **Barrier Disruption Risk**: Impact on lipid matrix and transepidermal water loss.
     4. **Safe Routine Strategy**: How to split or layer them safely (e.g., A in AM, B in PM).
     """
-
     try:
         response = groq_client.chat.completions.create(
             messages=[
@@ -308,7 +211,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
         return None
 
 # -----------------------------------------------------------------------------
-# 5. STREAMLIT INTERFACE
+# 4. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
 st.title("🌸 MONAD: Biological Watchdog")
 st.caption("✨ Multi-source database engine with personalized clinical forecasting.")
@@ -318,24 +221,7 @@ st.markdown("> **Medical Disclaimer:** *Monad provides research-backed biologica
 if not GROQ_KEY:
     st.warning("⚠️ Groq API Key not detected in Streamlit Secrets. AI dynamic features are disabled.")
 
-html_datalist = """
-<div style="font-family: sans-serif; margin-bottom: 5px;">
-    <label style="font-size: 14px; font-weight: 600; color: #38bdf8;">⚡ Quick Search (Type brand or product name):</label>
-    <input list="skincare_suggestions" id="live_input" placeholder="e.g. CeraVe, La Roche-Posay, The Ordinary..." 
-           style="width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #6366f1; font-size: 15px; outline: none; background-color: rgba(30, 41, 59, 0.85); color: #f8fafc;"/>
-    <datalist id="skincare_suggestions">
-        <option value="CeraVe Hydrating Facial Cleanser">
-        <option value="CeraVe Resurfacing Retinol Serum">
-        <option value="The Ordinary Niacinamide 10% + Zinc 1%">
-        <option value="The Ordinary Glycolic Acid 7% Toning Solution">
-        <option value="La Roche-Posay Effaclar Duo">
-        <option value="La Roche-Posay Anthelios SPF 50+">
-        <option value="Paula's Choice 2% BHA Liquid Exfoliant">
-    </datalist>
-</div>
-"""
-components.html(html_datalist, height=85)
-
+# Global Skin Profile Configuration
 with st.expander("👤 Customize Your Skin Profile (Personalized Analysis)", expanded=True):
     col_s1, col_s2 = st.columns(2)
     with col_s1:
@@ -348,18 +234,17 @@ user_profile = {"type": skin_type, "barrier": barrier_state}
 tab_single, tab_stack = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"])
 
 # -----------------------------------------------------------------------------
-# TAB 1: SINGLE PRODUCT ANALYSIS (WITH CAMERA BARCODE SCANNER)
+# TAB 1: PRODUCT ANALYSIS & BARCODE SCANNER
 # -----------------------------------------------------------------------------
 with tab_single:
-    st.markdown("### 📸 Scan Product Barcode")
-    camera_photo = st.camera_input("Take a photo of the product barcode")
+    st.markdown("### 🔍 Product Search & Barcode Input")
     
-    if camera_photo:
-        st.info("📷 Barcode camera frame captured!")
+    user_query = st.text_input("Search Product:", placeholder="Type brand name, product name, or barcode digits...")
 
-    st.markdown("---")
-
-    user_query = st.text_input("Product Search:", placeholder="Enter brand or product name...", key="single_search")
+    with st.expander("📸 Optional: Scan Barcode via Camera"):
+        camera_photo = st.camera_input("Take a photo of the product barcode", label_visibility="collapsed")
+        if camera_photo:
+            st.info("📷 Barcode camera frame captured!")
 
     if user_query:
         with st.spinner("Searching multi-source registries..."):
@@ -436,6 +321,8 @@ with tab_single:
                     with st.expander("🏷️ Extracted INCI Ingredient Formula", expanded=False):
                         st.caption(f"Source: {selected_product['source']}")
                         st.info(selected_product["ingredients"])
+        else:
+            st.warning("No matching products found in registries for your query.")
 
 # -----------------------------------------------------------------------------
 # TAB 2: ROUTINE STACKING & COMPATIBILITY MATRIX
