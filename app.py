@@ -7,7 +7,24 @@ from groq import Groq
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIG & API KEYS
 # -----------------------------------------------------------------------------
-st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
+
+
+# If you have st.set_page_config in your code, keep it here:
+st.set_page_config(page_title="MONAD", layout="wide")
+
+# PASTE THE CSS CODE RIGHT HERE:
+st.markdown(
+    """
+    <style>
+    html, body {
+        overscroll-behavior-y: contain;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Your existing code continues below...
 
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
