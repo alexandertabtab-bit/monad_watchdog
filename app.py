@@ -296,7 +296,18 @@ user_profile = {"type": skin_type, "barrier": barrier_state}
 
 tab_single, tab_stack = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"])
 
+# -----------------------------------------------------------------------------
+# TAB 1: SINGLE PRODUCT ANALYSIS (WITH CAMERA BARCODE SCANNER)
+# -----------------------------------------------------------------------------
 with tab_single:
+    st.markdown("### 📸 Scan Product Barcode")
+    camera_photo = st.camera_input("Take a photo of the product barcode")
+    
+    if camera_photo:
+        st.info("📷 Barcode camera frame captured!")
+
+    st.markdown("---")
+
     user_query = st.text_input("Product Search:", placeholder="Enter brand or product name...", key="single_search")
 
     if user_query:
@@ -375,6 +386,9 @@ with tab_single:
                         st.caption(f"Source: {selected_product['source']}")
                         st.info(selected_product["ingredients"])
 
+# -----------------------------------------------------------------------------
+# TAB 2: ROUTINE STACKING & COMPATIBILITY MATRIX
+# -----------------------------------------------------------------------------
 with tab_stack:
     st.markdown("### 🔄 Dual-Product Routine Stacking Evaluation")
     st.caption("Check chemical compatibility and barrier safety before layering two products.")
