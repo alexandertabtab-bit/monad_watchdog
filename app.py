@@ -1,6 +1,7 @@
 import json
 import requests
 import streamlit as st
+import base64
 from groq import Groq
 
 # -----------------------------------------------------------------------------
@@ -11,48 +12,77 @@ st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="center
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
 
-# Custom Pastel Styling
-st.markdown(
+# Helper function to load local image as base64 for the background
+@st.cache_data
+def get_base64_of_bin_file(bin_file):
+    try:
+        with open(bin_file, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except FileNotFoundError:
+        return None
+
+img_base64 = get_base64_of_bin_file("image_21155156_2.jpg")
+
+# Custom Styling (Pastel + Background Image)
+if img_base64:
+    bg_style = f"""
+        .stApp {{
+            background-image: url("data:image/jpeg;base64,{img_base64}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }}
+        /* Adds a soft frosted glass overlay so text remains readable */
+        [data-testid="stAppViewContainer"] > .main {{
+            background-color: rgba(255, 255, 255, 0.65); 
+        }}
     """
+else:
+    bg_style = """
+        .stApp {
+            background: linear-gradient(135deg, #fff5f7 0%, #fefcf0 50%, #f0f7f4 100%);
+        }
+    """
+
+st.markdown(
+    f"""
     <style>
-    .stApp {
-        background: linear-gradient(135deg, #fff5f7 0%, #fefcf0 50%, #f0f7f4 100%);
-        color: #4a4045;
-    }
+    {bg_style}
     
-    html, body, [data-testid="stAppViewContainer"] {
+    html, body, [data-testid="stAppViewContainer"] {{
         overscroll-behavior-y: none !important;
-    }
+    }}
 
-    h1, h2, h3, h4, h5, h6 {
+    h1, h2, h3, h4, h5, h6 {{
         color: #5c4b51 !important;
-    }
+    }}
 
-    input, textarea, select {
-        background-color: #ffffff !important;
+    input, textarea, select {{
+        background-color: rgba(255, 255, 255, 0.9) !important;
         color: #4a4045 !important;
         border: 1px solid #e8d7dc !important;
         border-radius: 8px !important;
-    }
+    }}
 
-    .stButton>button {
+    .stButton>button {{
         background-color: #f48fb1 !important;
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
         font-weight: 600;
         transition: background-color 0.2s ease;
-    }
-    .stButton>button:hover {
+    }}
+    .stButton>button:hover {{
         background-color: #ec407a !important;
         color: white !important;
-    }
+    }}
 
-    div[data-testid="stExpander"], div.stContainer {
-        background-color: rgba(255, 255, 255, 0.7);
+    div[data-testid="stExpander"], div.stContainer {{
+        background-color: rgba(255, 255, 255, 0.85);
         border: 1px solid #f3e5f5;
         border-radius: 10px;
-    }
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -153,7 +183,8 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             "Week 1": "Initial cellular adaptation response",
             "Month 1": "Epidermal structural changes",
             "Year 1": "Long-term maintenance impact",
-            "Year 10": "Structural preservation effect"
+            "Year 10": "Structural preservation effect",
+            "Year 100": "Lifelong biological legacy / theoretical maximum preservation"
         }},
         "medical_sources": [
             "Cosmetic Ingredient Review (CIR) Safety Assessment",
@@ -291,13 +322,19 @@ with tab_single:
                             st.markdown(f"- {c}")
 
                     st.markdown("---")
+                    
                     st.markdown("### ⏳ Customized Longevity Spectrum")
                     spectrum_data = ai_data.get("spectrum", {})
                     if spectrum_data:
-                        spec_tabs = st.tabs(list(spectrum_data.keys()))
-                        for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
-                            with t_tab:
-                                st.write(f"**{tf} Impact:** {text}")
+                        timeframes = list(spectrum_data.keys())
+                        
+                        selected_time = st.select_slider(
+                            "Slide to view long-term biological impact:",
+                            options=timeframes,
+                            value=timeframes[0]
+                        )
+                        
+                        st.info(f"**{selected_time} Impact:** {spectrum_data[selected_time]}")
 
                     st.markdown("---")
                     with st.expander("🔬 Deep Dive Clinical Lab (Dosing & Citations)", expanded=False):
