@@ -11,7 +11,7 @@ from groq import Groq
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIG & BACKGROUND GENERATOR
 # -----------------------------------------------------------------------------
-st.set_age_config(page_title="Decode You: Longevity & Routine Guard", page_icon="🌸", layout="centered")
+st.set_page_config(page_title="Decode You", page_icon="🌸", layout="centered")
 
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
@@ -288,7 +288,7 @@ def ai_comprehensive_analysis(prod_name, prod_ing, routine_products, user_profil
 # -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
-st.title("🌸 DECODE YOU: Longevity & Routine Safety Guard")
+st.title("🌸 DECODE YOU")
 st.caption("✨ Advanced biological spectrum analysis, routine collision detection, and reactive skin defense.")
 
 with st.expander("💡 How Decode You Protects Your Skin", expanded=False):
