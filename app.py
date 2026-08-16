@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import requests
 import base64
@@ -9,14 +10,16 @@ import streamlit as st
 from groq import Groq
 
 # -----------------------------------------------------------------------------
-# 1. PAGE CONFIG & BACKGROUND GENERATOR
+# 1. PAGE CONFIG & BACKGROUND GENERATOR (IN-MEMORY)
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad: Decode You", page_icon="🌸", layout="centered")
 
-GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
+# FIX 1: Prioritize Replit environment variables, fallback to Streamlit secrets
+GROQ_KEY = os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY", "")
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
 
-def create_japanese_pastel_bg(width=1920, height=1080):
+@st.cache_data(max_entries=1) # Cache the image generation so it only runs once per app lifecycle
+def create_japanese_pastel_bg_base64(width=1920, height=1080):
     image = Image.new("RGB", (width, height))
     draw = ImageDraw.Draw(image)
 
@@ -74,21 +77,13 @@ def create_japanese_pastel_bg(width=1920, height=1080):
         )
 
     final_background = Image.alpha_composite(image, petal_layer)
-    final_background.convert("RGB").save("japanese_pastel_background.png")
+    
+    # FIX 2: Generate directly to in-memory bytes (skips disk write)
+    buffered = io.BytesIO()
+    final_background.convert("RGB").save(buffered, format="JPEG")
+    return base64.b64encode(buffered.getvalue()).decode()
 
-bg_filename = "japanese_pastel_background.png"
-if not os.path.exists(bg_filename):
-    create_japanese_pastel_bg()
-
-@st.cache_data
-def get_base64_of_bin_file(bin_file):
-    try:
-        with open(bin_file, 'rb') as f:
-            return base64.b64encode(f.read()).decode()
-    except FileNotFoundError:
-        return None
-
-img_base64 = get_base64_of_bin_file(bg_filename)
+img_base64 = create_japanese_pastel_bg_base64()
 
 # -----------------------------------------------------------------------------
 # 2. CUSTOM CSS STYLING
@@ -165,11 +160,13 @@ st.markdown(
 # -----------------------------------------------------------------------------
 # 3. INGREDIENT RETRIEVAL PIPELINE (WITH FUZZY SPELLING FALLBACK)
 # -----------------------------------------------------------------------------
-@st.cache_data(ttl=300)
+# FIX 3: Added max_entries to prevent container OOM crashes
+@st.cache_data(ttl=300, max_entries=50) 
 def fetch_registry_data(api_url):
     headers = {"User-Agent": "MonadDecodeYou - Research/Educational - v1.0"}
     try:
-        res = requests.get(api_url, headers=headers, timeout=5)
+        # FIX 4: Bumped timeout to 8 seconds and added specific exception handling
+        res = requests.get(api_url, headers=headers, timeout=8)
         if res.status_code == 200:
             products = res.json().get("products", [])
             valid = []
@@ -181,6 +178,8 @@ def fetch_registry_data(api_url):
                     label = f"{brands} - {name}" if brands else name
                     valid.append({"label": label, "ingredients": ingredients.strip()})
             return valid
+    except requests.exceptions.Timeout:
+        st.warning("⚠️ The ingredient registry took too long to respond. Please try again.")
     except Exception:
         pass
     return []
@@ -220,7 +219,8 @@ def parse_ingredient_badges(ingredients_text):
 # -----------------------------------------------------------------------------
 # 4. AI ENGINES (STRICT MEDICAL VERIFICATION)
 # -----------------------------------------------------------------------------
-@st.cache_data(show_spinner=False)
+# FIX 3: Added max_entries to prevent container OOM crashes
+@st.cache_data(show_spinner=False, max_entries=20)
 def ai_analyze_product(product_name, ingredients, skin_profile):
     if not groq_client:
         return None
@@ -300,7 +300,8 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         st.error(f"AI Generation Error: {e}")
         return None
 
-@st.cache_data(show_spinner=False)
+# FIX 3: Added max_entries to prevent container OOM crashes
+@st.cache_data(show_spinner=False, max_entries=20)
 def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
     if not groq_client:
         return None
@@ -354,7 +355,7 @@ with st.expander("💡 What is Monad? (How it works & Data Reliability)", expand
 st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for a 90%+ confidence interval by instructing its AI engine to strictly base analysis on peer-reviewed clinical data (e.g., PubMed, CIR Safety Assessments). However, AI cannot replace a doctor. Always patch test and consult a certified dermatologist for active clinical treatment or severe reactions.*")
 
 if not GROQ_KEY:
-    st.warning("⚠️ Groq API Key not detected in Streamlit Secrets. AI dynamic features are disabled.")
+    st.warning("⚠️ Groq API Key not detected in Streamlit Secrets or Environment Variables. AI dynamic features are disabled.")
 
 # Global Biological & Medical Profile Configuration
 with st.expander("👤 Step 1: Customize Your Biological & Medical Profile", expanded=True):
