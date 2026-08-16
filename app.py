@@ -9,22 +9,69 @@ from groq import Groq
 # -----------------------------------------------------------------------------
 
 
-# If you have st.set_page_config in your code, keep it here:
-st.set_page_config(
-    page_title="Monad Watchdog", page_icon="🌸", layout="centered"
-)
 
+st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="wide")
+
+# CSS to fix mobile pull-to-refresh
 st.markdown(
     """
     <style>
     html, body, [data-testid="stAppViewContainer"] {
-        overscroll-behavior-y: none;
-        overflow-y: auto;
+        overscroll-behavior-y: none !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
+
+# Navigation Tabs at the top
+tab1, tab2 = st.tabs(
+    ["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"]
+)
+
+with tab1:
+    st.markdown("### 📸 Scan or Enter Product Barcode")
+
+    # This creates the side-by-side layout on PC (and stacks nicely on mobile)
+    col_input, col_results = st.columns([1, 1], gap="large")
+
+    with col_input:
+        st.markdown("#### Input Method")
+
+        # 1. Manual Barcode Text Input
+        manual_barcode = st.text_input(
+            "Or type barcode number manually:",
+            placeholder="e.g., 5449000000996",
+        )
+
+        st.markdown("---")
+        st.markdown("**Take a photo of the product barcode**")
+
+        # 2. Camera Input
+        camera_image = st.camera_input("Camera Feed", label_visibility="collapsed")
+
+        # 3. Search Action Button
+        search_clicked = st.button(
+            "Analyze Product", type="primary", use_container_width=True
+        )
+
+    with col_results:
+        st.markdown("#### Analysis & Results")
+
+        # Your processing/lookup logic goes here
+        if manual_barcode:
+            st.success(f"Processing manual barcode: {manual_barcode}")
+        elif camera_image:
+            st.success("Barcode image captured successfully!")
+        else:
+            st.info(
+                "👈 Scan a barcode with your camera or type the code manually to view product analysis results here."
+            )
+
+with tab2:
+    st.markdown("### Routine Stacking Compatibility")
+    st.info("Routine compatibility tools will appear here.")
+
 
 # Your existing code continues below...
 
