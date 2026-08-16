@@ -340,7 +340,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
 # -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
-st.title("🏛️ MONAD: Decode You")
+st.title("🌸 MONAD: Decode You")
 st.caption("✨ Advanced molecular intelligence engine tailored to your complete biological profile.")
 
 with st.expander("💡 What is Monad? (How it works)", expanded=False):
