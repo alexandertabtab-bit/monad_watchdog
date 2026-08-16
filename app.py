@@ -10,14 +10,16 @@ from groq import Groq
 
 
 # If you have st.set_page_config in your code, keep it here:
-st.set_page_config(page_title="MONAD", layout="wide")
+st.set_page_config(
+    page_title="Monad Watchdog", page_icon="🌸", layout="centered"
+)
 
-# PASTE THE CSS CODE RIGHT HERE:
 st.markdown(
     """
     <style>
-    html, body {
-        overscroll-behavior-y: contain;
+    html, body, [data-testid="stAppViewContainer"] {
+        overscroll-behavior-y: none;
+        overflow-y: auto;
     }
     </style>
     """,
