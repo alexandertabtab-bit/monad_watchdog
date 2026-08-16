@@ -35,7 +35,7 @@ def create_japanese_pastel_bg(width=1920, height=1080):
             local_p = (percentage - 0.5) * 2.0
             r = int(color_pink[0] + (color_green[0] - color_pink[0]) * local_p)
             g = int(color_pink[1] + (color_green[1] - color_pink[1]) * local_p)
-            b = int(color_pink[2] + (color_green[2] - color_green[2]) * local_p)
+            b = int(color_pink[2] + (color_green[2] - color_pink[2]) * local_p)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -249,7 +249,6 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
 
     Return a JSON object with this exact structure (do not include markdown outside JSON):
     {{
-        "verdict_status": "Safe Match" or "Caution Required" or "Contraindicated Alert",
         "headline": "A punchy, 1-sentence headline summarizing how this formula fits their profile.",
         "analysis": "2-sentence clinical summary explicitly addressing how this formula interacts with their complete biological profile, medications, and life stage.",
         "usage_protocol": {{
@@ -258,8 +257,14 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             "application_step": "Order in skincare routine",
             "time_to_visible_results": "Expected timeline"
         }},
-        "pros": ["Specific benefit tailored to their biological profile 1", "Specific benefit tailored to their skin type 2"],
-        "cons": ["Specific caution, medication conflict, or irritation risk tailored to their profile 1", "Specific risk tailored to their profile 2"],
+        "pros": [
+            {{"title": "Short title for pro 1", "detail": "Detailed explanation of why this benefits their biology."}},
+            {{"title": "Short title for pro 2", "detail": "Detailed explanation of why this benefits their skin type."}}
+        ],
+        "cons": [
+            {{"title": "Short title for caution 1", "detail": "Detailed explanation of the risk, conflict, or barrier disruption."}},
+            {{"title": "Short title for caution 2", "detail": "Detailed explanation of the secondary risk."}}
+        ],
         "spectrum": {{
             "Day 1": "Immediate reaction, pH adjustment, and sensory feel for this specific profile.",
             "Day 3": "Early barrier response and hydration shift under their barrier condition.",
@@ -317,10 +322,9 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     Ingredients B: {prod_b_ing}
 
     Provide a concise clinical evaluation covering:
-    1. **Overall Compatibility Verdict**: (Compatible / Alternate Days / Do Not Combine)
-    2. **Active Ingredient Overlaps & pH Conflicts**: (e.g., AHA/BHA + Retinoid, Acid + Vitamin C)
-    3. **Medical, Medication & Barrier Disruption Risk**: Impact on their specific medical sensitivities and systemic factors.
-    4. **Safe Routine Strategy**: How to split or layer them safely.
+    1. **Active Ingredient Overlaps & pH Conflicts**: (e.g., AHA/BHA + Retinoid, Acid + Vitamin C)
+    2. **Medical, Medication & Barrier Disruption Risk**: Impact on their specific medical sensitivities and systemic factors.
+    3. **Safe Routine Strategy**: How to split or layer them safely.
     """
     try:
         response = groq_client.chat.completions.create(
@@ -430,13 +434,13 @@ with tab_single:
             f_rep, f_act, f_irr = parse_ingredient_badges(selected_product['ingredients'])
             badge_cols = st.columns(3)
             with badge_cols[0]:
-                st.markdown("**🟢 Barrier Support**")
+                st.markdown("**🟢 Barrier Supporting Ingredients**")
                 st.write(", ".join(f_rep) if f_rep else "None detected")
             with badge_cols[1]:
-                st.markdown("**🟡 Potent Actives**")
+                st.markdown("**🟡 Potent Active Ingredients**")
                 st.write(", ".join(f_act) if f_act else "None detected")
             with badge_cols[2]:
-                st.markdown("**🔴 Irritants / Fragrance**")
+                st.markdown("**🔴 Potential Irritants / Fragrance**")
                 st.write(", ".join(f_irr) if f_irr else "None detected")
 
             st.markdown("---")
@@ -446,31 +450,43 @@ with tab_single:
                     ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'], user_profile)
                     
                 if ai_data:
-                    # INTERACTIVE CLINICAL HUD HEADINGS & BADGES
-                    status = ai_data.get("verdict_status", "Safe Match")
-                    if "Safe" in status:
-                        st.success(f"🟢 **HUD Status: {status}**")
-                    elif "Caution" in status:
-                        st.warning(f"🟡 **HUD Status: {status}**")
-                    else:
-                        st.error(f"🔴 **HUD Status: {status}**")
-
                     st.markdown(f"### 🎯 {ai_data.get('headline', '')}")
                     
-                    # Interactive Pros & Cons Cards in 2 Columns
+                    # INTERACTIVE CLICKABLE PROS & CONS (USING EXPANDER CARDS)
                     col_p, col_c = st.columns(2)
                     with col_p:
                         st.markdown("#### ✅ Biological Wins")
-                        for p in ai_data.get("pros", []):
-                            st.info(f"✨ {p}")
+                        pros = ai_data.get("pros", [])
+                        if pros:
+                            for i, p in enumerate(pros):
+                                if isinstance(p, dict):
+                                    title = p.get("title", f"Benefit {i+1}")
+                                    detail = p.get("detail", "")
+                                    with st.expander(f"✨ {title}"):
+                                        st.write(detail)
+                                else:
+                                    st.info(f"✨ {p}")
+                        else:
+                            st.write("None highlighted for this profile.")
+
                     with col_c:
                         st.markdown("#### ⚠️ Systemic & Barrier Alerts")
-                        for c in ai_data.get("cons", []):
-                            st.warning(f"⚡ {c}")
+                        cons = ai_data.get("cons", [])
+                        if cons:
+                            for i, c in enumerate(cons):
+                                if isinstance(c, dict):
+                                    title = c.get("title", f"Alert {i+1}")
+                                    detail = c.get("detail", "")
+                                    with st.expander(f"⚡ {title}"):
+                                        st.write(detail)
+                                else:
+                                    st.warning(f"⚡ {c}")
+                        else:
+                            st.write("No major alerts detected.")
 
                     st.markdown("---")
                     
-                    # Expandable Deep-Dive Clinical Summary (Keeps the heavy reading optional!)
+                    # Expandable Deep-Dive Clinical Summary
                     with st.expander("📖 Read Full Clinical Analysis & Rationale", expanded=False):
                         st.write(ai_data.get("analysis", ""))
 
