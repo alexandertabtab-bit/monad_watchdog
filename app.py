@@ -1,259 +1,197 @@
 import streamlit as st
 import requests
+import json
+from groq import Groq
 
 # -----------------------------------------------------------------------------
-# 1. API HELPER FUNCTIONS
+# 1. SETUP & API INITIALIZATION
+# -----------------------------------------------------------------------------
+st.set_page_config(page_title="Monad Watchdog", page_icon="⚡", layout="centered")
+
+# Retrieve Groq API Key safely from Secrets
+GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
+groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
+
+# -----------------------------------------------------------------------------
+# 2. MULTI-SOURCE INGREDIENT RETRIEVAL PIPELINE
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300)
-def search_open_beauty_facts(query):
-    """Searches Open Beauty Facts for products with valid INCI lists."""
-    if not query or len(query.strip()) < 2:
-        return []
-    
-    url = f"https://world.openbeautyfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=20"
+def fetch_from_open_beauty_facts(query):
+    """Source 1: Open Beauty Facts API."""
+    url = f"https://world.openbeautyfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=10"
     headers = {"User-Agent": "MonadWatchdog - Research/Educational - v1.0"}
-    
     try:
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            products = data.get("products", [])
-            
-            valid_results = []
+        res = requests.get(url, headers=headers, timeout=5)
+        if res.status_code == 200:
+            products = res.json().get("products", [])
+            valid = []
             for p in products:
                 name = p.get("product_name") or p.get("product_name_en")
                 brands = p.get("brands", "")
                 ingredients = p.get("ingredients_text") or p.get("ingredients_text_en")
-                
                 if name and ingredients and len(ingredients.strip()) > 5:
-                    display_label = f"{brands} - {name}" if brands else name
-                    valid_results.append({
-                        "label": display_label,
-                        "ingredients": ingredients.strip()
-                    })
-            return valid_results
+                    label = f"{brands} - {name}" if brands else name
+                    valid.append({"label": label, "ingredients": ingredients.strip(), "source": "Open Beauty Facts"})
+            return valid
     except Exception:
         pass
     return []
 
-def fetch_by_barcode(barcode):
-    """Direct lookup via Product Barcode."""
-    url = f"https://world.openbeautyfacts.org/api/v2/product/{barcode}.json"
+@st.cache_data(ttl=300)
+def fetch_from_open_food_facts(query):
+    """Source 2: Open Food Facts API (Fallback for personal care items registered under main database)."""
+    url = f"https://world.openfoodfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=10"
     headers = {"User-Agent": "MonadWatchdog - Research/Educational - v1.0"}
     try:
-        response = requests.get(url, headers=headers, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("status") == 1:
-                product = data.get("product", {})
-                name = product.get("product_name") or "Scanned Product"
-                ingredients = product.get("ingredients_text") or "INCI list not logged for this barcode."
-                return name, ingredients
+        res = requests.get(url, headers=headers, timeout=5)
+        if res.status_code == 200:
+            products = res.json().get("products", [])
+            valid = []
+            for p in products:
+                name = p.get("product_name") or p.get("product_name_en")
+                brands = p.get("brands", "")
+                ingredients = p.get("ingredients_text") or p.get("ingredients_text_en")
+                if name and ingredients and len(ingredients.strip()) > 5:
+                    label = f"{brands} - {name}" if brands else name
+                    valid.append({"label": label, "ingredients": ingredients.strip(), "source": "Open Food Facts Registry"})
+            return valid
     except Exception:
         pass
-    return None, None
+    return []
+
+def multi_source_search(query):
+    """Aggregates results across multiple databases."""
+    results = fetch_from_open_beauty_facts(query)
+    if not results:
+        results = fetch_from_open_food_facts(query)
+    return results
 
 
 # -----------------------------------------------------------------------------
-# 2. UPGRADE 1: POSITIONAL INCI INGREDIENT PARSER
+# 3. AI ENGINE: DYNAMIC LONGEVITY SPECTRUM & ANALYSIS (GROQ)
 # -----------------------------------------------------------------------------
-def analyze_inci_positions(inci_string):
-    """Analyzes ingredients based on their concentration position in the INCI list."""
-    ingredients = [i.strip().lower() for i in inci_string.split(",")]
-    total = len(ingredients)
+def ai_analyze_product(product_name, ingredients):
+    """Uses Groq AI to generate a custom longevity spectrum and biological report."""
+    if not groq_client:
+        return None
+
+    prompt = f"""
+    You are Monad, an expert biological skincare & chemical watchdog.
+    Analyze this product and its INCI ingredient list:
+    Product: {product_name}
+    Ingredients: {ingredients}
+
+    Return a JSON object with this exact structure (do not include markdown outside JSON):
+    {{
+        "analysis": "Brief 2-sentence objective summary of key active ingredients and target skin suitability.",
+        "pros": ["Pro 1", "Pro 2"],
+        "cons": ["Con 1", "Con 2"],
+        "spectrum": {{
+            "Day 1": "Specific impact on day 1 based on these exact ingredients.",
+            "Week 1": "Specific impact after 1 week based on these exact ingredients.",
+            "Month 1": "Specific impact after 1 month based on these exact ingredients.",
+            "Year 1": "Specific long-term impact after 1 year.",
+            "Year 10": "Specific cumulative impact after 10 years.",
+            "Year 20": "Specific structural impact after 20 years."
+        }}
+    }}
+    """
     
-    flags = []
-    has_actives = False
-    
-    for idx, ing in enumerate(ingredients):
-        is_top5 = idx < 5
-        
-        # Drying Alcohols
-        if "alcohol denat" in ing or "sd alcohol" in ing:
-            if is_top5:
-                flags.append("🚨 **High Risk:** Drying Alcohol is in the Top 5 ingredients! High potential to strip natural skin lipids.")
-            else:
-                flags.append("⚠️ **Low/Trace Risk:** Drying alcohol present lower on the label (likely a solvent).")
-                
-        # Fragrance / Parfum
-        if "fragrance" in ing or "parfum" in ing:
-            if idx > (total - 3):
-                flags.append("ℹ️ **Minimal Risk:** Fragrance is at the very bottom of the label (<1%).")
-            else:
-                flags.append("⚠️ **Sensitizer Flag:** Fragrance appears higher in the formula; potential sensitizer for reactive skin.")
-                
-        # Beneficial Actives & Barrier Repair
-        if any(active in ing for active in ["petrolatum", "ceramide", "niacinamide", "glycerin", "hyaluronic", "zinc"]):
-            has_actives = True
-
-    if has_actives:
-        flags.append("✅ **Barrier Actives Detected:** Formula contains proven protective/restorative agents (e.g. Ceramides, Glycerin, Petrolatum, Niacinamide).")
-        
-    if not flags:
-        flags.append("ℹ️ Standard cosmetic baseline. No major drying solvents or perfumes flagged.")
-        
-    return flags
-
-
-# -----------------------------------------------------------------------------
-# 3. MONAD BENCHMARK MATRIX (With Full Longevity Time Spectrum)
-# -----------------------------------------------------------------------------
-MONAD_BENCHMARKS = {
-    "vaseline": {
-        "title": "Vaseline / Pure Petroleum Jelly (100% White Petrolatum USP)",
-        "roi_rating": "Highest ROI",
-        "roi_explanation": "Reduces Trans-Epidermal Water Loss (TEWL) by over 98%. Most effective barrier sealant available.",
-        "pricing": {"retail": "$4.00 (100g)", "daily": "$0.05", "time": "30 secs"},
-        "permanence": "Temporary (Protective physical shield while present)",
-        "actives": "White Petrolatum USP (100%)",
-        "pros": ["Blocks 98%+ transepidermal water loss", "100% non-comedogenic on clean skin", "Inert; zero allergic risk"],
-        "cons": ["Greasy texture / heavy finish", "Traps debris if applied over unwashed skin"],
-        "truth": "Locks 98%+ of existing dermal moisture inside. Unbeatable value-to-performance ratio.",
-        "spectrum": {
-            "Day 1": "Instantly forms a physical hydrophobic barrier, stopping moisture evaporation.",
-            "Week 1": "Accelerates stratum corneum lipid barrier recovery after harsh cleansing.",
-            "Month 1": "Sustained epidermal hydration restores skin flexibility and softens micro-cracks.",
-            "Year 1": "Prevents chronic dehydration-induced fine lines across moisture-starved skin.",
-            "Year 10": "Maintains baseline epidermal thickness by preventing chronic barrier breakdown.",
-            "Year 20": "Dermal matrix retains higher water density compared to untreated dry skin."
-        }
-    },
-    "topical sunscreen": {
-        "title": "Broad Spectrum Topical Sunscreen (SPF 30-50+)",
-        "roi_rating": "High ROI",
-        "roi_explanation": "Prevents up to 80% of visible photoaging and stops UV-induced collagen degradation.",
-        "pricing": {"retail": "$18.00 (50ml)", "daily": "$0.50", "time": "2 mins"},
-        "permanence": "Temporary (Requires daily reapplication)",
-        "actives": "Zinc Oxide, Titanium Dioxide, Avobenzone, Tinosorb",
-        "pros": ["Halts photocarcinogenesis and dark spots", "Preserves structural collagen"],
-        "cons": ["Washes off with sweat", "Requires strict daily discipline"],
-        "truth": "UV protection drops to zero after 2 hours in direct sun. Stopping exposes cells to immediate photo-damage.",
-        "spectrum": {
-            "Day 1": "Blocks UVA/UVB rays from causing direct cellular DNA strand damage.",
-            "Week 1": "Reduces sub-clinical UV micro-inflammation and redness.",
-            "Month 1": "Inhibits active melanocytes, halting hyperpigmentation from darkening.",
-            "Year 1": "Preserves existing structural collagen and elastin fibers in the dermis.",
-            "Year 10": "40% lower risk of skin cancers; drastically fewer deep wrinkling structures.",
-            "Year 20": "Dermal collagen matrix remains 5 to 10 years younger than chronological age."
-        }
-    }
-}
-
-DEFAULT_SPECTRUM = {
-    "Day 1": "Topical application sits on the stratum corneum; active ingredients begin absorption.",
-    "Week 1": "Initial stabilization of surface moisture levels and superficial lipid balance.",
-    "Month 1": "One full cellular skin cell turnover cycle (~28 days). Surface texture improvements visible.",
-    "Year 1": "Sustained ingredient performance maintains skin barrier stability against environmental stressors.",
-    "Year 10": "Long-term barrier preservation cumulative effect reduces structural moisture loss.",
-    "Year 20": "Cumulative maintenance preserves cellular health compared to unmaintained skin."
-}
+    try:
+        response = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You output strictly valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        return json.loads(response.choices[0].message.content)
+    except Exception as e:
+        st.error(f"AI Generation Error: {e}")
+        return None
 
 
 # -----------------------------------------------------------------------------
 # 4. STREAMLIT INTERFACE
 # -----------------------------------------------------------------------------
-st.set_page_config(page_title="Monad Watchdog", page_icon="⚡", layout="centered")
-
 st.title("⚡ MONAD: Biological Product Watchdog")
-st.caption("Objective ingredient analysis, positional INCI inspection, and longevity spectrum forecasting.")
+st.caption("Multi-source database engine paired with Groq AI dynamic spectrum forecasting.")
 
 st.markdown("> **Disclaimer:** *Monad provides research-backed biological ingredient analysis for educational purposes.*")
 
-# Navigation Tabs for Upgrades
-tab_search, tab_camera = st.tabs(["🔍 Product Search", "📷 Scan Barcode"])
+if not GROQ_KEY:
+    st.warning("⚠️ Groq API Key not detected in Streamlit Secrets. AI dynamic features are disabled.")
 
-selected_ingredients = None
-product_display_name = None
+# Search Input
+user_query = st.text_input("🔍 Search product or brand name:", placeholder="e.g. Cerave, Fructis, Byphasse, Retinol...")
 
-# --- TAB 1: TEXT SEARCH ---
-with tab_search:
-    user_query = st.text_input("Search product, brand, or ingredient:", placeholder="e.g. vaseline, cerave, fructis, byphasse...")
-    
-    if user_query:
-        clean_query = user_query.strip().lower()
-        
-        # Check Benchmarks
-        matched_bm = next((k for k in MONAD_BENCHMARKS if k in clean_query or clean_query in k), None)
-        
-        if matched_bm:
-            bm_data = MONAD_BENCHMARKS[matched_bm]
-            st.divider()
-            st.subheader(f"📊 Monad Benchmark: {bm_data['title']}")
-            
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Longevity ROI", bm_data["roi_rating"])
-            c2.metric("Daily Cost", bm_data["pricing"]["daily"])
-            c3.metric("Daily Effort", bm_data["pricing"]["time"])
-            
-            st.info(f"**Biological Logic:** {bm_data['roi_explanation']}")
-            st.error(f"**🔥 BRUTAL BIOLOGICAL TRUTH:**\n\n{bm_data['truth']}")
-            
-            # TIME SPECTRUM FOR BENCHMARKS
-            st.markdown("### ⏳ The Longevity Time Spectrum")
-            spec_tabs = st.tabs(list(bm_data["spectrum"].keys()))
-            for t_tab, (tf, text) in zip(spec_tabs, bm_data["spectrum"].items()):
-                with t_tab:
-                    st.write(text)
-                    
-        else:
-            # Global Search
-            with st.spinner("Analyzing global database..."):
-                suggestions = search_open_beauty_facts(user_query)
-                
-            if suggestions:
-                options = [s["label"] for s in suggestions]
-                sel_name = st.selectbox(f"Found {len(suggestions)} verified matches:", options=options)
-                selected_data = next(s for s in suggestions if s["label"] == sel_name)
-                
-                product_display_name = selected_data["label"]
-                selected_ingredients = selected_data["ingredients"]
-            else:
-                st.warning("No matched products found. Use the manual INCI parser below:")
-                pasted = st.text_area("Paste INCI string from back of bottle:")
-                if pasted:
-                    product_display_name = "Custom INCI Formula"
-                    selected_ingredients = pasted
-
-# --- TAB 2: CAMERA BARCODE SCANNER ---
-with tab_camera:
-    st.markdown("### 📷 Point Camera at Product Barcode")
-    img_input = st.camera_input("Take a clear picture of the product barcode")
-    barcode_manual = st.text_input("Or enter 13-digit Barcode number manually:", placeholder="e.g. 3337875597196")
-    
-    target_barcode = barcode_manual.strip() if barcode_manual else None
-    
-    if target_barcode:
-        with st.spinner("Searching barcode database..."):
-            b_name, b_inci = fetch_by_barcode(target_barcode)
-            if b_inci:
-                product_display_name = b_name
-                selected_ingredients = b_inci
-            else:
-                st.error("Barcode not found in Open Beauty Facts registry.")
-
-
-# -----------------------------------------------------------------------------
-# 5. RENDER ANALYSIS & TIME SPECTRUM FOR SEARCHED / SCANNED PRODUCTS
-# -----------------------------------------------------------------------------
-if selected_ingredients and product_display_name:
+if user_query:
     st.divider()
-    st.success(f"**Product Loaded:** {product_display_name}")
     
-    st.markdown("### 🔬 Official INCI Ingredient Breakdown")
-    st.info(selected_ingredients)
-    
-    # POSITIONAL INCI ANALYSIS (UPGRADE 1)
-    st.markdown("### 🛡️ Positional Biological Risk Inspection")
-    pos_flags = analyze_inci_positions(selected_ingredients)
-    for flag in pos_flags:
-        st.write(flag)
+    with st.spinner("Querying multiple database registries..."):
+        matches = multi_source_search(user_query)
         
-    # RESTORED LONGEVITY TIME SPECTRUM
-    st.markdown("---")
-    st.markdown("### ⏳ Projected Biological Time Spectrum")
-    st.caption("Cumulative skin cell impact from Day 1 through 20 Years of use:")
-    
-    spec_tabs = st.tabs(list(DEFAULT_SPECTRUM.keys()))
-    for t_tab, (tf, text) in zip(spec_tabs, DEFAULT_SPECTRUM.items()):
-        with t_tab:
-            st.write(f"**{tf} Impact:** {text}")
+    if matches:
+        options = [f"{m['label']} ({m['source']})" for m in matches]
+        selected_option = st.selectbox(f"Found {len(matches)} verified matches across registries:", options=options)
+        
+        selected_product = next(m for m in matches if f"{m['label']} ({m['source']})" == selected_option)
+        
+        st.markdown("---")
+        st.success(f"**Loaded Product:** {selected_product['label']}")
+        st.caption(f"Source Database: {selected_product['source']}")
+        
+        st.markdown("### 🔬 Extracted INCI Label")
+        st.info(selected_product["ingredients"])
+        
+        # Run AI Generation
+        if GROQ_KEY:
+            with st.spinner("🤖 Monad AI generating custom product timeline & analysis..."):
+                ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'])
+                
+            if ai_data:
+                st.markdown("### 🛡️ AI Biological Breakdown")
+                st.write(ai_data.get("analysis", ""))
+                
+                col_p, col_c = st.columns(2)
+                with col_p:
+                    st.markdown("#### ✅ Pros")
+                    for p in ai_data.get("pros", []):
+                        st.markdown(f"- {p}")
+                with col_c:
+                    st.markdown("#### ⚠️ Cons")
+                    for c in ai_data.get("cons", []):
+                        st.markdown(f"- {c}")
+                
+                # DYNAMIC SPECTRUM
+                st.markdown("---")
+                st.markdown("### ⏳ Customized Product Longevity Spectrum")
+                st.caption("AI-generated cumulative skin cell impact tailored specifically to this formula:")
+                
+                spectrum_data = ai_data.get("spectrum", {})
+                if spectrum_data:
+                    spec_tabs = st.tabs(list(spectrum_data.keys()))
+                    for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
+                        with t_tab:
+                            st.write(f"**{tf} Impact:** {text}")
+                            
+    else:
+        st.warning(f"No database matches found for '{user_query}'. Using AI chemical knowledge base fallback...")
+        
+        if GROQ_KEY:
+            with st.spinner("🤖 Consulting Monad AI Knowledge Base..."):
+                ai_fallback = ai_analyze_product(user_query, "Common market formulation for " + user_query)
+                
+            if ai_fallback:
+                st.markdown("### 🛡️ AI Estimated Formulation Analysis")
+                st.write(ai_fallback.get("analysis", ""))
+                
+                st.markdown("### ⏳ Estimated Longevity Spectrum")
+                spectrum_data = ai_fallback.get("spectrum", {})
+                if spectrum_data:
+                    spec_tabs = st.tabs(list(spectrum_data.keys()))
+                    for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
+                        with t_tab:
+                            st.write(f"**{tf} Impact:** {text}")
