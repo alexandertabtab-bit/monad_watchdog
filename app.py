@@ -9,90 +9,67 @@ import streamlit.components.v1 as components
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
-# Pure CSS Animated Background (Aurora Mesh + Floating Particle Glows)
+# Replace the CSS inside st.markdown() with this targeted deep-space particle style:
 st.markdown("""
 <style>
-    /* Aurora Mesh Animation Base */
-    @keyframes auroraShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
+    /* Glowing Ambient Floating Orbs */
+    @keyframes orbFloat {
+        0% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.4; }
+        33% { transform: translateY(-30px) translateX(20px) scale(1.08); opacity: 0.7; }
+        66% { transform: translateY(15px) translateX(-25px) scale(0.95); opacity: 0.5; }
+        100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.4; }
     }
 
-    /* Floating Bioluminescent Particle Nodes */
-    @keyframes floatParticles {
-        0% {
-            background-position: 0px 0px, 0px 0px, 0px 0px;
-        }
-        50% {
-            background-position: 300px -300px, -200px 400px, 150px -200px;
-        }
-        100% {
-            background-position: 600px -600px, -400px 800px, 300px -400px;
-        }
+    /* Floating Particle Dust Field */
+    @keyframes particleDrift {
+        0% { background-position: 0px 0px, 0px 0px, 0px 0px; }
+        100% { background-position: 500px -1000px, -400px -800px, 300px -600px; }
     }
 
-    /* Apply Full Screen Animation directly to Streamlit App Layer */
+    /* Deep Space Fluid Mesh Target */
     .stApp {
-        background: 
-            radial-gradient(circle at 20% 20%, rgba(244, 114, 182, 0.12) 0%, transparent 40%),
-            radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.12) 0%, transparent 40%),
-            radial-gradient(2px 2px at 40px 60px, rgba(244, 114, 182, 0.8), rgba(0,0,0,0)),
-            radial-gradient(3px 3px at 150px 180px, rgba(56, 189, 248, 0.7), rgba(0,0,0,0)),
-            radial-gradient(2px 2px at 280px 80px, rgba(168, 85, 247, 0.8), rgba(0,0,0,0)),
-            radial-gradient(4px 4px at 350px 320px, rgba(244, 114, 182, 0.6), rgba(0,0,0,0)),
-            radial-gradient(2px 2px at 480px 220px, rgba(56, 189, 248, 0.75), rgba(0,0,0,0)),
-            linear-gradient(-45deg, #090d16, #161b2e, #0f2b26, #1a0933) !important;
-        background-size: 100% 100%, 100% 100%, 600px 600px, 500px 500px, 700px 700px, 600px 600px, 550px 550px, 400% 400% !important;
-        animation: floatParticles 25s linear infinite, auroraShift 18s ease infinite !important;
-        color: #e2e8f0;
+        background-color: #060913 !important;
+        background-image: 
+            /* Soft Cyan Light Ray (Top Right) */
+            radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.25) 0%, transparent 45%),
+            /* Deep Magenta Glow (Bottom Left) */
+            radial-gradient(circle at 15% 85%, rgba(236, 72, 153, 0.2) 0%, transparent 50%),
+            /* Fine Star/Pollen Dust - Small */
+            radial-gradient(1.5px 1.5px at 20px 30px, rgba(255, 255, 255, 0.8), rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 150px 150px, rgba(56, 189, 248, 0.9), rgba(0,0,0,0)),
+            /* Medium Floating Particles - Pink/Cyan */
+            radial-gradient(2.5px 2.5px at 280px 80px, rgba(244, 114, 182, 0.85), rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 420px 300px, rgba(168, 85, 247, 0.75), rgba(0,0,0,0)),
+            /* Ambient Deep Background Texture */
+            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, #060913 100%) !important;
+        background-size: 100% 100%, 100% 100%, 400px 400px, 550px 550px, 650px 650px, 750px 750px, 100% 100% !important;
+        animation: particleDrift 35s linear infinite !important;
+        color: #f1f5f9;
     }
-    
-    /* Glassmorphic Containers */
-    div[data-testid="stExpander"], div[data-testid="stVerticalBlock"] > div {
-        background: rgba(15, 23, 42, 0.55) !important;
-        backdrop-filter: blur(12px) !important;
-        border: 1px solid rgba(99, 102, 241, 0.3) !important;
-        border-radius: 14px !important;
+
+    /* Glassmorphic UI Cards with Neon Borders */
+    div[data-testid="stExpander"], 
+    div[data-testid="stVerticalBlock"] > div {
+        background: rgba(10, 15, 29, 0.65) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(244, 114, 182, 0.25) !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        border-radius: 16px !important;
     }
-    
-    /* Form Inputs */
-    input, select, textarea {
-        background-color: rgba(30, 41, 59, 0.85) !important;
-        color: #f8fafc !important;
-        border: 1px solid #6366f1 !important;
-        border-radius: 10px !important;
-    }
-    
-    /* Buttons */
-    .stButton > button {
-        background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%);
-        color: white;
-        font-weight: 600;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        box-shadow: 0 0 18px rgba(236, 72, 153, 0.7);
-        transform: translateY(-1px);
-    }
-    
-    /* Glowing Titles */
+
+    /* Neon Accent Text Headings */
     h1, h2, h3 {
         color: #f472b6 !important;
-        text-shadow: 0 0 12px rgba(244, 114, 182, 0.4);
+        text-shadow: 0 0 15px rgba(244, 114, 182, 0.5) !important;
     }
+    
     h4 {
         color: #38bdf8 !important;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Retrieve Groq API Key
-GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
-groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
 
 
 # -----------------------------------------------------------------------------
