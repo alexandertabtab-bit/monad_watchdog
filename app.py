@@ -249,6 +249,8 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
 
     Return a JSON object with this exact structure (do not include markdown outside JSON):
     {{
+        "verdict_status": "Safe Match" or "Caution Required" or "Contraindicated Alert",
+        "headline": "A punchy, 1-sentence headline summarizing how this formula fits their profile.",
         "analysis": "2-sentence clinical summary explicitly addressing how this formula interacts with their complete biological profile, medications, and life stage.",
         "usage_protocol": {{
             "frequency": "Frequency strictly adapted to their barrier condition and medications",
@@ -340,7 +342,6 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
 st.title("🏛️ MONAD: Decode You")
 st.caption("✨ Advanced molecular intelligence engine tailored to your complete biological profile.")
 
-# Onboarding guide for new users
 with st.expander("💡 What is Monad? (How it works)", expanded=False):
     st.markdown("""
     Welcome to **Monad: Decode You**! Here is how the concept works:
@@ -445,21 +446,34 @@ with tab_single:
                     ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'], user_profile)
                     
                 if ai_data:
-                    st.markdown("### 🛡️ Clinical Biological Summary")
-                    st.write(ai_data.get("analysis", ""))
+                    # INTERACTIVE CLINICAL HUD HEADINGS & BADGES
+                    status = ai_data.get("verdict_status", "Safe Match")
+                    if "Safe" in status:
+                        st.success(f"🟢 **HUD Status: {status}**")
+                    elif "Caution" in status:
+                        st.warning(f"🟡 **HUD Status: {status}**")
+                    else:
+                        st.error(f"🔴 **HUD Status: {status}**")
+
+                    st.markdown(f"### 🎯 {ai_data.get('headline', '')}")
                     
+                    # Interactive Pros & Cons Cards in 2 Columns
                     col_p, col_c = st.columns(2)
                     with col_p:
-                        st.markdown("#### ✅ Pros & Benefits")
+                        st.markdown("#### ✅ Biological Wins")
                         for p in ai_data.get("pros", []):
-                            st.success(p)
+                            st.info(f"✨ {p}")
                     with col_c:
-                        st.markdown("#### ⚠️ Cautions & Medical Alerts")
+                        st.markdown("#### ⚠️ Systemic & Barrier Alerts")
                         for c in ai_data.get("cons", []):
-                            st.error(c)
+                            st.warning(f"⚡ {c}")
 
                     st.markdown("---")
                     
+                    # Expandable Deep-Dive Clinical Summary (Keeps the heavy reading optional!)
+                    with st.expander("📖 Read Full Clinical Analysis & Rationale", expanded=False):
+                        st.write(ai_data.get("analysis", ""))
+
                     st.markdown("### ⏳ Customized Longevity Spectrum")
                     spectrum_data = ai_data.get("spectrum", {})
                     if spectrum_data:
