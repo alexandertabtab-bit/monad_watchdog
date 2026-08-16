@@ -259,7 +259,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         }},
         "pros": ["Pro tailored to profile 1", "Pro tailored to profile 2"],
         "cons": ["Con/Caution tailored to profile 1", "Con/Caution tailored to profile 2"],
-       "spectrum": {{
+       "spectrum": {
             "Day 1": "Immediate reaction, pH adjustment, and sensory feel.",
             "Day 3": "Early barrier response and hydration shift.",
             "Day 7": "End of first week adaptation.",
