@@ -16,19 +16,53 @@ st.set_page_config(
 # Initialize the Groq key securely from Streamlit secrets
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# Custom CSS for background design, theme, and mobile pull-to-refresh fix
+# Custom CSS matching your pastel pink, cream yellow, and soft green theme inspiration
 st.markdown(
     """
     <style>
-    /* Restores your custom app background and container styling */
+    /* Main App Background - Soft cream-yellow and pastel pink gradient */
     .stApp {
-        background-color: #0d0f18;
-        background-image: radial-gradient(circle at 50% 10%, #1a1025 0%, #0d0f18 70%);
-        color: #f8f9fa;
+        background: linear-gradient(135deg, #fff5f7 0%, #fefcf0 50%, #f0f7f4 100%);
+        color: #4a4045;
     }
     
+    /* Fix mobile pull-to-refresh */
     html, body, [data-testid="stAppViewContainer"] {
         overscroll-behavior-y: none !important;
+    }
+
+    /* Headings */
+    h1, h2, h3, h4, h5, h6 {
+        color: #5c4b51 !important;
+    }
+
+    /* Input text fields styling */
+    input, textarea, select {
+        background-color: #ffffff !important;
+        color: #4a4045 !important;
+        border: 1px solid #e8d7dc !important;
+        border-radius: 8px !important;
+    }
+
+    /* Custom Buttons - Pastel Pink Theme */
+    .stButton>button {
+        background-color: #f48fb1 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600;
+        transition: background-color 0.2s ease;
+    }
+    .stButton>button:hover {
+        background-color: #ec407a !important;
+        color: white !important;
+    }
+
+    /* Containers & Expanders */
+    div[data-testid="stExpander"], div.stContainer {
+        background-color: rgba(255, 255, 255, 0.7);
+        border: 1px solid #f3e5f5;
+        border-radius: 10px;
     }
     </style>
     """,
@@ -53,27 +87,24 @@ with tab1:
     st.markdown("---")
 
     # ==========================================
-    # SECTION 1: ALL SEARCH & INPUT TOOLS TOGETHER
+    # SECTION 1: UNIFIED SEARCH & INPUT SECTION
     # ==========================================
-    st.markdown("### 🔍 Unified Search & Input Section")
+    st.markdown("### 🔍 Search & Product Input")
 
     with st.container():
+        # Single consolidated search input for product name or barcode
         search_query = st.text_input(
-            "Quick Search (Type brand or product name):",
-            placeholder="e.g., CeraVe, La Roche-Posay, The Ordinary...",
+            "Search Product (Type name, brand, or barcode number):",
+            placeholder="e.g., CeraVe, La Roche-Posay, or barcode digits...",
         )
 
-        barcode_query = st.text_input(
-            "Or Enter Barcode Number:",
-            placeholder="Type barcode digits if available...",
-        )
-
+        # Optional compact camera scanner
         with st.expander("📸 Optional: Scan Barcode via Camera"):
             camera_image = st.camera_input(
                 "Take a photo of the barcode", label_visibility="collapsed"
             )
 
-        st.markdown("#### ⚙️ Customize Your Skin Profile (Personalized Analysis)")
+        st.markdown("#### ⚙️ Customize Your Skin Profile")
         col_skin1, col_skin2 = st.columns(2)
         with col_skin1:
             skin_type = st.selectbox(
@@ -92,6 +123,7 @@ with tab1:
                 ["Healthy / Resilient", "Compromised / Irritated", "Dehydrated"],
             )
 
+        st.markdown("")
         search_triggered = st.button(
             "Run Product Analysis", type="primary", use_container_width=True
         )
@@ -110,18 +142,18 @@ with tab1:
             )
         else:
             if search_query:
-                st.success(f"Analyzing product name: **{search_query}**")
-            elif barcode_query:
-                st.success(f"Analyzing barcode number: **{barcode_query}**")
+                st.success(
+                    f"Analyzing product or barcode: **{search_query}**"
+                )
             elif camera_image:
                 st.success("Analyzing captured barcode image...")
             else:
                 st.warning(
-                    "Please enter a product name, barcode, or scan an image to run analysis."
+                    "Please enter a product name/barcode or scan an image to run analysis."
                 )
     else:
         st.info(
-            "👆 Fill out your search query or barcode above and click 'Run Product Analysis' to view results."
+            "👆 Enter a product name or barcode above and click 'Run Product Analysis' to view your insights."
         )
 
 with tab2:
