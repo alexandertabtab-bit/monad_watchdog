@@ -1,16 +1,23 @@
-import streamlit as st
-import requests
 import json
-from groq import Groq
+import requests
+import streamlit as st
 import streamlit.components.v1 as components
+from groq import Groq
 
 # -----------------------------------------------------------------------------
-# 1. SETUP & GUARANTEED PURE CSS ANIMATED NATURE BACKGROUND
+# 1. PAGE CONFIG & API KEYS (Defined FIRST to prevent NameError)
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
-# Replace the CSS inside st.markdown() with this targeted deep-space particle style:
-st.markdown("""
+# Retrieve Groq API Key right at the start
+GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
+groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
+
+# -----------------------------------------------------------------------------
+# 2. ATMOSPHERIC CSS NATURE & PARTICLE BACKGROUND
+# -----------------------------------------------------------------------------
+st.markdown(
+    """
 <style>
     /* Glowing Ambient Floating Orbs */
     @keyframes orbFloat {
@@ -58,6 +65,29 @@ st.markdown("""
         border-radius: 16px !important;
     }
 
+    /* Form Inputs Styling */
+    input, select, textarea {
+        background-color: rgba(30, 41, 59, 0.85) !important;
+        color: #f8fafc !important;
+        border: 1px solid #6366f1 !important;
+        border-radius: 10px !important;
+    }
+
+    /* Action Buttons */
+    .stButton > button {
+        background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        box-shadow: 0 0 18px rgba(236, 72, 153, 0.7);
+        transform: translateY(-1px);
+    }
+
     /* Neon Accent Text Headings */
     h1, h2, h3 {
         color: #f472b6 !important;
@@ -69,11 +99,13 @@ st.markdown("""
         text-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 # -----------------------------------------------------------------------------
-# 2. INGREDIENT RETRIEVAL PIPELINE & BADGE INDEX
+# 3. INGREDIENT RETRIEVAL PIPELINE & BADGE INDEX
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300)
 def fetch_from_open_beauty_facts(query):
@@ -138,7 +170,7 @@ def parse_ingredient_badges(ingredients_text):
 
 
 # -----------------------------------------------------------------------------
-# 3. AI ENGINES: ANALYSIS & ROUTINE COMPATIBILITY
+# 4. AI ENGINES: ANALYSIS & ROUTINE COMPATIBILITY
 # -----------------------------------------------------------------------------
 def ai_analyze_product(product_name, ingredients, skin_profile):
     if not groq_client:
@@ -231,7 +263,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
 
 
 # -----------------------------------------------------------------------------
-# 4. STREAMLIT INTERFACE & INTERACTIVE NAVIGATION
+# 5. STREAMLIT INTERFACE & INTERACTIVE NAVIGATION
 # -----------------------------------------------------------------------------
 st.title("🌸 MONAD: Biological Watchdog")
 st.caption("✨ Multi-source database engine with personalized clinical forecasting.")
