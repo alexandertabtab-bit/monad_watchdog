@@ -5,88 +5,107 @@ from groq import Groq
 import streamlit.components.v1 as components
 
 # -----------------------------------------------------------------------------
-# 1. SETUP & DREAMY BIOLUMINESCENT CANVAS BACKGROUND
+# 1. SETUP & GUARANTEED FULL-SCREEN ANIMATED BACKGROUND (PURE CSS + CANVAS)
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
-# Animated Nature Canvas + Glassmorphism UI CSS
+# Inject Background Engine directly into Parent Document DOM + Pure CSS Gradient
 components.html("""
-<div id="canvas-container" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; background: linear-gradient(135deg, #090d16 0%, #111827 50%, #1e1b4b 100%);">
-    <canvas id="nature-bg"></canvas>
-</div>
 <script>
-    const canvas = document.getElementById('nature-bg');
-    const ctx = canvas.getContext('2d');
-    let width = canvas.width = window.innerWidth;
-    let height = canvas.height = window.innerHeight;
+    // Access parent window to bypass Streamlit iframe isolation
+    const parentDoc = window.parent.document;
+    
+    if (!parentDoc.getElementById('nature-bg-canvas')) {
+        const container = parentDoc.createElement('div');
+        container.id = 'canvas-container';
+        container.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none;';
+        
+        const canvas = parentDoc.createElement('canvas');
+        canvas.id = 'nature-bg-canvas';
+        container.appendChild(canvas);
+        parentDoc.body.prepend(container);
 
-    window.addEventListener('resize', () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-    });
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.parent.innerWidth;
+        let height = canvas.height = window.parent.innerHeight;
 
-    const particles = [];
-    const colors = ['rgba(244, 114, 182, ', 'rgba(56, 189, 248, ', 'rgba(168, 85, 247, '];
-
-    for (let i = 0; i < 45; i++) {
-        particles.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            radius: Math.random() * 3 + 1,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            alpha: Math.random() * 0.6 + 0.2,
-            vx: (Math.random() - 0.5) * 0.4,
-            vy: -Math.random() * 0.5 - 0.2
+        window.parent.addEventListener('resize', () => {
+            width = canvas.width = window.parent.innerWidth;
+            height = canvas.height = window.parent.innerHeight;
         });
-    }
 
-    function animate() {
-        ctx.clearRect(0, 0, width, height);
-        particles.forEach(p => {
-            p.x += p.vx;
-            p.y += p.vy;
-            if (p.y < -10) p.y = height + 10;
-            if (p.x < -10) p.x = width + 10;
-            if (p.x > width + 10) p.x = -10;
+        const particles = [];
+        const colors = ['rgba(244, 114, 182, ', 'rgba(56, 189, 248, ', 'rgba(168, 85, 247, '];
 
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color + p.alpha + ')';
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = p.color + '0.8)';
-            ctx.fill();
-        });
-        requestAnimationFrame(animate);
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                radius: Math.random() * 3.5 + 1,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: Math.random() * 0.6 + 0.2,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: -Math.random() * 0.6 - 0.2
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.y < -10) p.y = height + 10;
+                if (p.x < -10) p.x = width + 10;
+                if (p.x > width + 10) p.x = -10;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color + p.alpha + ')';
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = p.color + '0.8)';
+                ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
     }
-    animate();
 </script>
 """, height=0)
 
+# CSS Animation Fallback & Glassmorphism Theme
 st.markdown("""
 <style>
-    /* Make Streamlit app transparent for the canvas background */
+    @keyframes deepAurora {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* Animated Aurora Background + Full Transparency for Floating Canvas */
     .stApp {
-        background: transparent !important;
+        background: linear-gradient(-45deg, #090d16, #1e1b4b, #0f2b26, #1a0933) !important;
+        background-size: 400% 400% !important;
+        animation: deepAurora 20s ease infinite !important;
         color: #e2e8f0;
     }
     
-    /* Glassmorphism containers */
+    /* Glassmorphic Containers */
     div[data-testid="stExpander"], div[data-testid="stVerticalBlock"] > div {
-        background: rgba(30, 41, 59, 0.45) !important;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(99, 102, 241, 0.25);
-        border-radius: 14px;
+        background: rgba(15, 23, 42, 0.55) !important;
+        backdrop-filter: blur(12px) !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        border-radius: 14px !important;
     }
     
-    /* Inputs Styling */
+    /* Input Form Fields */
     input, select, textarea {
-        background-color: rgba(30, 41, 59, 0.8) !important;
+        background-color: rgba(30, 41, 59, 0.85) !important;
         color: #f8fafc !important;
         border: 1px solid #6366f1 !important;
         border-radius: 10px !important;
     }
     
-    /* Buttons Styling */
+    /* Buttons */
     .stButton > button {
         background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%);
         color: white;
@@ -97,11 +116,11 @@ st.markdown("""
         transition: all 0.3s ease;
     }
     .stButton > button:hover {
-        box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
+        box-shadow: 0 0 18px rgba(236, 72, 153, 0.7);
         transform: translateY(-1px);
     }
     
-    /* Headings */
+    /* Titles and Accents */
     h1, h2, h3 {
         color: #f472b6 !important;
         text-shadow: 0 0 12px rgba(244, 114, 182, 0.4);
@@ -169,7 +188,6 @@ def multi_source_search(query):
     return results
 
 def parse_ingredient_badges(ingredients_text):
-    """Categorizes INCI items into safety visual badges."""
     text_lower = ingredients_text.lower()
     
     replenishing = ["ceramide", "hyaluronic", "glycerin", "panthenol", "squalane", "centella", "allantoin", "niacinamide", "cholesterol", "madecassoside"]
@@ -184,10 +202,9 @@ def parse_ingredient_badges(ingredients_text):
 
 
 # -----------------------------------------------------------------------------
-# 3. AI ENGINES: ANALYSIS, COMPATIBILITY & ROUTINE STACKING
+# 3. AI ENGINES: ANALYSIS & ROUTINE COMPATIBILITY
 # -----------------------------------------------------------------------------
 def ai_analyze_product(product_name, ingredients, skin_profile):
-    """Generates customized report based on product and user skin profile."""
     if not groq_client:
         return None
 
@@ -243,7 +260,6 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
 
 
 def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
-    """Analyzes dual-product compatibility and routine stacking safety."""
     if not groq_client:
         return None
 
@@ -289,12 +305,12 @@ st.markdown("> **Medical Disclaimer:** *Monad provides research-backed biologica
 if not GROQ_KEY:
     st.warning("⚠️ Groq API Key not detected in Streamlit Secrets. AI dynamic features are disabled.")
 
-# Instant Search Suggestions HTML Component
+# Instant Search Suggestions
 html_datalist = """
 <div style="font-family: sans-serif; margin-bottom: 5px;">
-    <label style="font-size: 14px; font-weight: 600; color: #38bdf8;">⚡ Search Database (Type brand or formula name):</label>
+    <label style="font-size: 14px; font-weight: 600; color: #38bdf8;">⚡ Quick Search (Type brand or product name):</label>
     <input list="skincare_suggestions" id="live_input" placeholder="e.g. CeraVe, La Roche-Posay, The Ordinary..." 
-           style="width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #6366f1; font-size: 15px; outline: none; background-color: rgba(30, 41, 59, 0.8); color: #f8fafc;"/>
+           style="width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #6366f1; font-size: 15px; outline: none; background-color: rgba(30, 41, 59, 0.85); color: #f8fafc;"/>
     <datalist id="skincare_suggestions">
         <option value="CeraVe Hydrating Facial Cleanser">
         <option value="CeraVe Resurfacing Retinol Serum">
