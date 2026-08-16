@@ -9,34 +9,28 @@ from groq import Groq
 # -----------------------------------------------------------------------------
 
 
-st.set_page_config(
-    page_title="Monad Watchdog", page_icon="🌸", layout="centered"
-)
+import streamlit as st
 
-# Initialize the Groq key securely from Streamlit secrets
+st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
+
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
 
-# Custom CSS matching your pastel pink, cream yellow, and soft green theme inspiration
 st.markdown(
     """
     <style>
-    /* Main App Background - Soft cream-yellow and pastel pink gradient */
     .stApp {
         background: linear-gradient(135deg, #fff5f7 0%, #fefcf0 50%, #f0f7f4 100%);
         color: #4a4045;
     }
     
-    /* Fix mobile pull-to-refresh */
     html, body, [data-testid="stAppViewContainer"] {
         overscroll-behavior-y: none !important;
     }
 
-    /* Headings */
     h1, h2, h3, h4, h5, h6 {
         color: #5c4b51 !important;
     }
 
-    /* Input text fields styling */
     input, textarea, select {
         background-color: #ffffff !important;
         color: #4a4045 !important;
@@ -44,7 +38,6 @@ st.markdown(
         border-radius: 8px !important;
     }
 
-    /* Custom Buttons - Pastel Pink Theme */
     .stButton>button {
         background-color: #f48fb1 !important;
         color: white !important;
@@ -58,7 +51,6 @@ st.markdown(
         color: white !important;
     }
 
-    /* Containers & Expanders */
     div[data-testid="stExpander"], div.stContainer {
         background-color: rgba(255, 255, 255, 0.7);
         border: 1px solid #f3e5f5;
@@ -69,15 +61,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab1, tab2 = st.tabs(
-    ["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"]
-)
+tab1, tab2 = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"])
 
 with tab1:
     st.markdown("### 🌸 MONAD: Biological Watchdog")
-    st.caption(
-        "Multi-source database engine with personalized clinical forecasting."
-    )
+    st.caption("Multi-source database engine with personalized clinical forecasting.")
 
     with st.expander("ℹ️ Medical Disclaimer"):
         st.write(
@@ -86,36 +74,23 @@ with tab1:
 
     st.markdown("---")
 
-    # ==========================================
-    # SECTION 1: UNIFIED SEARCH & INPUT SECTION
-    # ==========================================
     st.markdown("### 🔍 Search & Product Input")
 
     with st.container():
-        # Single consolidated search input for product name or barcode
         search_query = st.text_input(
-            "Search Product (Type name, brand, or barcode number):",
-            placeholder="e.g., CeraVe, La Roche-Posay, or barcode digits...",
+            "Search Product:",
+            placeholder="Type brand name, product name, or barcode digits...",
         )
 
-        # Optional compact camera scanner
         with st.expander("📸 Optional: Scan Barcode via Camera"):
-            camera_image = st.camera_input(
-                "Take a photo of the barcode", label_visibility="collapsed"
-            )
+            camera_image = st.camera_input("Take a photo of the barcode", label_visibility="collapsed")
 
         st.markdown("#### ⚙️ Customize Your Skin Profile")
         col_skin1, col_skin2 = st.columns(2)
         with col_skin1:
             skin_type = st.selectbox(
                 "Skin Type:",
-                [
-                    "Balanced / Normal",
-                    "Dry",
-                    "Oily",
-                    "Combination",
-                    "Sensitive",
-                ],
+                ["Balanced / Normal", "Dry", "Oily", "Combination", "Sensitive"],
             )
         with col_skin2:
             barrier_condition = st.selectbox(
@@ -124,11 +99,28 @@ with tab1:
             )
 
         st.markdown("")
-        search_triggered = st.button(
-            "Run Product Analysis", type="primary", use_container_width=True
-        )
+        search_triggered = st.button("Run Product Analysis", type="primary", use_container_width=True)
 
     st.markdown("---")
+
+    st.markdown("### 📊 Results & Product Info")
+
+    if search_triggered:
+        if not GROQ_KEY:
+            st.error("⚠️ Groq API Key is missing. Please add it to your Streamlit Cloud Secrets.")
+        else:
+            if search_query:
+                st.success(f"Analyzing product or barcode: **{search_query}**")
+            elif camera_image:
+                st.success("Analyzing captured barcode image...")
+            else:
+                st.warning("Please enter a product name/barcode or scan an image to run analysis.")
+    else:
+        st.info("👆 Enter a product name or barcode above and click 'Run Product Analysis' to view your insights.")
+
+with tab2:
+    st.markdown("### Routine Stacking Compatibility")
+    st.info("Routine compatibility tools will appear here.")
 
     # ==========================================
     # SECTION 2: RESULTS & PRODUCT INFO SECTION
