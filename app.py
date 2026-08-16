@@ -10,6 +10,7 @@ from groq import Groq
 
 
 
+
 st.set_page_config(
     page_title="Monad Watchdog", page_icon="🌸", layout="centered"
 )
@@ -31,126 +32,94 @@ tab1, tab2 = st.tabs(
 )
 
 with tab1:
-    st.markdown("### 🛍️ Product Analysis & Lookup")
-
-    # 1. Search Bar is the FIRST thing at the top
-    search_query = st.text_input(
-        "Search Product or Enter Barcode:",
-        placeholder="Type product name or barcode number...",
+    st.markdown("### 🌸 MONAD: Biological Watchdog")
+    st.caption(
+        "Multi-source database engine with personalized clinical forecasting."
     )
 
-    search_clicked = st.button(
-        "Search Product", type="primary", use_container_width=True
-    )
+    with st.expander("ℹ️ Medical Disclaimer"):
+        st.write(
+            "Monad provides research-backed biological ingredient analysis for educational purposes. Consult a dermatologist for active clinical treatment."
+        )
 
     st.markdown("---")
 
-    # 2. Results & Info Section appears below
+    # ==========================================
+    # SECTION 1: ALL SEARCH & INPUT TOOLS TOGETHER
+    # ==========================================
+    st.markdown("### 🔍 Unified Search & Input Section")
+
+    # Grouped container for search tools
+    with st.container():
+        # Quick Search / Normal Product Search
+        search_query = st.text_input(
+            "Quick Search (Type brand or product name):",
+            placeholder="e.g., CeraVe, La Roche-Posay, The Ordinary...",
+        )
+
+        # Barcode Text Input
+        barcode_query = st.text_input(
+            "Or Enter Barcode Number:",
+            placeholder="Type barcode digits if available...",
+        )
+
+        # Optional: Compact Camera Scan Trigger
+        with st.expander("📸 Optional: Scan Barcode via Camera"):
+            camera_image = st.camera_input(
+                "Take a photo of the barcode", label_visibility="collapsed"
+            )
+
+        # Skin Type & Specifications (Grouped inside search/setup phase)
+        st.markdown("#### ⚙️ Customize Your Skin Profile (Personalized Analysis)")
+        col_skin1, col_skin2 = st.columns(2)
+        with col_skin1:
+            skin_type = st.selectbox(
+                "Skin Type:",
+                [
+                    "Balanced / Normal",
+                    "Dry",
+                    "Oily",
+                    "Combination",
+                    "Sensitive",
+                ],
+            )
+        with col_skin2:
+            barrier_condition = st.selectbox(
+                "Current Barrier Condition:",
+                ["Healthy / Resilient", "Compromised / Irritated", "Dehydrated"],
+            )
+
+        # Main action search button
+        search_triggered = st.button(
+            "Run Product Analysis", type="primary", use_container_width=True
+        )
+
+    st.markdown("---")
+
+    # ==========================================
+    # SECTION 2: RESULTS & PRODUCT INFO SECTION
+    # ==========================================
     st.markdown("### 📊 Results & Product Info")
 
-    if search_query:
-        st.success(f"Showing analysis results for: {search_query}")
-        # Insert your product info, ingredients, and search suggestions here
+    if search_triggered:
+        if search_query:
+            st.success(f"Analyzing product name: **{search_query}**")
+        elif barcode_query:
+            st.success(f"Analyzing barcode number: **{barcode_query}**")
+        elif camera_image:
+            st.success("Analyzing captured barcode image...")
+        else:
+            st.warning(
+                "Please enter a product name, barcode, or scan an image to run analysis."
+            )
     else:
-        st.info("Type a product name or barcode above to get started.")
+        st.info(
+            "👆 Fill out your search query or barcode above and click 'Run Product Analysis' to view results."
+        )
 
 with tab2:
     st.markdown("### Routine Stacking Compatibility")
     st.info("Routine compatibility tools will appear here.")
-
-# Your existing code continues below...
-
-GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
-groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
-
-# -----------------------------------------------------------------------------
-# 2. ATMOSPHERIC JAPANESE SAKURA & PARTICLE BACKGROUND
-# -----------------------------------------------------------------------------
-st.markdown(
-    """
-<style>
-    /* Falling Sakura Petals & Particle Animation */
-    @keyframes sakuraFall {
-        0% {
-            background-position: 0px 0px, 0px 0px, 0px 0px;
-        }
-        100% {
-            background-position: 500px 1000px, -400px 800px, 300px 600px;
-        }
-    }
-
-    /* Ambient Pulsing Glow */
-    @keyframes orbGlow {
-        0% { opacity: 0.3; transform: scale(1); }
-        50% { opacity: 0.6; transform: scale(1.05); }
-        100% { opacity: 0.3; transform: scale(1); }
-    }
-
-    /* Deep Space Fluid Mesh with Sakura Layers */
-    .stApp {
-        background-color: #060913 !important;
-        background-image: 
-            /* Light Rays & Atmospheric Glow */
-            radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.25) 0%, transparent 45%),
-            radial-gradient(circle at 15% 85%, rgba(56, 189, 248, 0.2) 0%, transparent 50%),
-            /* Petal Layer 1 - Floating Blossom Dust */
-            radial-gradient(2px 2px at 30px 40px, rgba(251, 207, 232, 0.9), rgba(0,0,0,0)),
-            radial-gradient(3px 3px at 150px 180px, rgba(244, 114, 182, 0.85), rgba(0,0,0,0)),
-            /* Petal Layer 2 - Midground Petals */
-            radial-gradient(4px 6px at 280px 90px, rgba(244, 114, 182, 0.75), rgba(0,0,0,0)),
-            radial-gradient(3px 5px at 420px 310px, rgba(251, 207, 232, 0.8), rgba(0,0,0,0)),
-            /* Dark Background Base */
-            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.85) 0%, #060913 100%) !important;
-        background-size: 100% 100%, 100% 100%, 350px 350px, 450px 450px, 550px 550px, 650px 650px, 100% 100% !important;
-        animation: sakuraFall 28s linear infinite !important;
-        color: #f1f5f9;
-    }
-
-    /* Glassmorphic UI Cards */
-    div[data-testid="stExpander"], 
-    div[data-testid="stVerticalBlock"] > div {
-        background: rgba(10, 15, 29, 0.65) !important;
-        backdrop-filter: blur(16px) !important;
-        -webkit-backdrop-filter: blur(16px) !important;
-        border: 1px solid rgba(244, 114, 182, 0.25) !important;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        border-radius: 16px !important;
-    }
-
-    input, select, textarea {
-        background-color: rgba(30, 41, 59, 0.85) !important;
-        color: #f8fafc !important;
-        border: 1px solid #6366f1 !important;
-        border-radius: 10px !important;
-    }
-
-    .stButton > button {
-        background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%);
-        color: white;
-        font-weight: 600;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        box-shadow: 0 0 18px rgba(236, 72, 153, 0.7);
-        transform: translateY(-1px);
-    }
-
-    h1, h2, h3 {
-        color: #f472b6 !important;
-        text-shadow: 0 0 15px rgba(244, 114, 182, 0.5) !important;
-    }
-    
-    h4 {
-        color: #38bdf8 !important;
-        text-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
-    }
-</style>
-""",
-    unsafe_allow_html=True,
-)
 
 # -----------------------------------------------------------------------------
 # 3. INGREDIENT RETRIEVAL PIPELINE
