@@ -5,56 +5,57 @@ import streamlit.components.v1 as components
 from groq import Groq
 
 # -----------------------------------------------------------------------------
-# 1. PAGE CONFIG & API KEYS (Defined FIRST to prevent NameError)
+# 1. PAGE CONFIG & API KEYS
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
-# Retrieve Groq API Key right at the start
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
 
 # -----------------------------------------------------------------------------
-# 2. ATMOSPHERIC CSS NATURE & PARTICLE BACKGROUND
+# 2. ATMOSPHERIC JAPANESE SAKURA & PARTICLE BACKGROUND
 # -----------------------------------------------------------------------------
 st.markdown(
     """
 <style>
-    /* Glowing Ambient Floating Orbs */
-    @keyframes orbFloat {
-        0% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.4; }
-        33% { transform: translateY(-30px) translateX(20px) scale(1.08); opacity: 0.7; }
-        66% { transform: translateY(15px) translateX(-25px) scale(0.95); opacity: 0.5; }
-        100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.4; }
+    /* Falling Sakura Petals & Particle Animation */
+    @keyframes sakuraFall {
+        0% {
+            background-position: 0px 0px, 0px 0px, 0px 0px;
+        }
+        100% {
+            background-position: 500px 1000px, -400px 800px, 300px 600px;
+        }
     }
 
-    /* Floating Particle Dust Field */
-    @keyframes particleDrift {
-        0% { background-position: 0px 0px, 0px 0px, 0px 0px; }
-        100% { background-position: 500px -1000px, -400px -800px, 300px -600px; }
+    /* Ambient Pulsing Glow */
+    @keyframes orbGlow {
+        0% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.05); }
+        100% { opacity: 0.3; transform: scale(1); }
     }
 
-    /* Deep Space Fluid Mesh Target */
+    /* Deep Space Fluid Mesh with Sakura Layers */
     .stApp {
         background-color: #060913 !important;
         background-image: 
-            /* Soft Cyan Light Ray (Top Right) */
-            radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.25) 0%, transparent 45%),
-            /* Deep Magenta Glow (Bottom Left) */
-            radial-gradient(circle at 15% 85%, rgba(236, 72, 153, 0.2) 0%, transparent 50%),
-            /* Fine Star/Pollen Dust - Small */
-            radial-gradient(1.5px 1.5px at 20px 30px, rgba(255, 255, 255, 0.8), rgba(0,0,0,0)),
-            radial-gradient(2px 2px at 150px 150px, rgba(56, 189, 248, 0.9), rgba(0,0,0,0)),
-            /* Medium Floating Particles - Pink/Cyan */
-            radial-gradient(2.5px 2.5px at 280px 80px, rgba(244, 114, 182, 0.85), rgba(0,0,0,0)),
-            radial-gradient(3px 3px at 420px 300px, rgba(168, 85, 247, 0.75), rgba(0,0,0,0)),
-            /* Ambient Deep Background Texture */
-            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.8) 0%, #060913 100%) !important;
-        background-size: 100% 100%, 100% 100%, 400px 400px, 550px 550px, 650px 650px, 750px 750px, 100% 100% !important;
-        animation: particleDrift 35s linear infinite !important;
+            /* Light Rays & Atmospheric Glow */
+            radial-gradient(circle at 85% 15%, rgba(244, 114, 182, 0.25) 0%, transparent 45%),
+            radial-gradient(circle at 15% 85%, rgba(56, 189, 248, 0.2) 0%, transparent 50%),
+            /* Petal Layer 1 - Floating Blossom Dust */
+            radial-gradient(2px 2px at 30px 40px, rgba(251, 207, 232, 0.9), rgba(0,0,0,0)),
+            radial-gradient(3px 3px at 150px 180px, rgba(244, 114, 182, 0.85), rgba(0,0,0,0)),
+            /* Petal Layer 2 - Midground Petals */
+            radial-gradient(4px 6px at 280px 90px, rgba(244, 114, 182, 0.75), rgba(0,0,0,0)),
+            radial-gradient(3px 5px at 420px 310px, rgba(251, 207, 232, 0.8), rgba(0,0,0,0)),
+            /* Dark Background Base */
+            radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.85) 0%, #060913 100%) !important;
+        background-size: 100% 100%, 100% 100%, 350px 350px, 450px 450px, 550px 550px, 650px 650px, 100% 100% !important;
+        animation: sakuraFall 28s linear infinite !important;
         color: #f1f5f9;
     }
 
-    /* Glassmorphic UI Cards with Neon Borders */
+    /* Glassmorphic UI Cards */
     div[data-testid="stExpander"], 
     div[data-testid="stVerticalBlock"] > div {
         background: rgba(10, 15, 29, 0.65) !important;
@@ -65,7 +66,6 @@ st.markdown(
         border-radius: 16px !important;
     }
 
-    /* Form Inputs Styling */
     input, select, textarea {
         background-color: rgba(30, 41, 59, 0.85) !important;
         color: #f8fafc !important;
@@ -73,7 +73,6 @@ st.markdown(
         border-radius: 10px !important;
     }
 
-    /* Action Buttons */
     .stButton > button {
         background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%);
         color: white;
@@ -88,7 +87,6 @@ st.markdown(
         transform: translateY(-1px);
     }
 
-    /* Neon Accent Text Headings */
     h1, h2, h3 {
         color: #f472b6 !important;
         text-shadow: 0 0 15px rgba(244, 114, 182, 0.5) !important;
@@ -103,9 +101,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-
 # -----------------------------------------------------------------------------
-# 3. INGREDIENT RETRIEVAL PIPELINE & BADGE INDEX
+# 3. INGREDIENT RETRIEVAL PIPELINE
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300)
 def fetch_from_open_beauty_facts(query):
@@ -168,9 +165,8 @@ def parse_ingredient_badges(ingredients_text):
 
     return found_replenish, found_actives, found_irritants
 
-
 # -----------------------------------------------------------------------------
-# 4. AI ENGINES: ANALYSIS & ROUTINE COMPATIBILITY
+# 4. AI ENGINES
 # -----------------------------------------------------------------------------
 def ai_analyze_product(product_name, ingredients, skin_profile):
     if not groq_client:
@@ -226,7 +222,6 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         st.error(f"AI Generation Error: {e}")
         return None
 
-
 def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
     if not groq_client:
         return None
@@ -261,9 +256,8 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
         st.error(f"Compatibility Error: {e}")
         return None
 
-
 # -----------------------------------------------------------------------------
-# 5. STREAMLIT INTERFACE & INTERACTIVE NAVIGATION
+# 5. STREAMLIT INTERFACE
 # -----------------------------------------------------------------------------
 st.title("🌸 MONAD: Biological Watchdog")
 st.caption("✨ Multi-source database engine with personalized clinical forecasting.")
@@ -273,7 +267,6 @@ st.markdown("> **Medical Disclaimer:** *Monad provides research-backed biologica
 if not GROQ_KEY:
     st.warning("⚠️ Groq API Key not detected in Streamlit Secrets. AI dynamic features are disabled.")
 
-# Instant Search Suggestions
 html_datalist = """
 <div style="font-family: sans-serif; margin-bottom: 5px;">
     <label style="font-size: 14px; font-weight: 600; color: #38bdf8;">⚡ Quick Search (Type brand or product name):</label>
@@ -292,7 +285,6 @@ html_datalist = """
 """
 components.html(html_datalist, height=85)
 
-# --- USER SKIN PROFILE SELECTOR ---
 with st.expander("👤 Customize Your Skin Profile (Personalized Analysis)", expanded=True):
     col_s1, col_s2 = st.columns(2)
     with col_s1:
@@ -302,13 +294,8 @@ with st.expander("👤 Customize Your Skin Profile (Personalized Analysis)", exp
 
 user_profile = {"type": skin_type, "barrier": barrier_state}
 
-# Navigation Tabs
 tab_single, tab_stack = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"])
 
-
-# -----------------------------------------------------------------------------
-# TAB 1: SINGLE PRODUCT ANALYSIS
-# -----------------------------------------------------------------------------
 with tab_single:
     user_query = st.text_input("Product Search:", placeholder="Enter brand or product name...", key="single_search")
 
@@ -324,7 +311,6 @@ with tab_single:
             st.markdown("---")
             st.success(f"**Loaded:** {selected_product['label']}")
 
-            # Safety Badge Extraction
             f_rep, f_act, f_irr = parse_ingredient_badges(selected_product['ingredients'])
             badge_cols = st.columns(3)
             with badge_cols[0]:
@@ -366,7 +352,6 @@ with tab_single:
                             with t_tab:
                                 st.write(f"**{tf} Impact:** {text}")
 
-                    # Expandable Deep Dive Lab
                     st.markdown("---")
                     with st.expander("🔬 Deep Dive Clinical Lab (Dosing & Citations)", expanded=False):
                         st.markdown("#### 📋 Personalized Dosing Protocol")
@@ -390,10 +375,6 @@ with tab_single:
                         st.caption(f"Source: {selected_product['source']}")
                         st.info(selected_product["ingredients"])
 
-
-# -----------------------------------------------------------------------------
-# TAB 2: ROUTINE STACKING & COMPATIBILITY MATRIX
-# -----------------------------------------------------------------------------
 with tab_stack:
     st.markdown("### 🔄 Dual-Product Routine Stacking Evaluation")
     st.caption("Check chemical compatibility and barrier safety before layering two products.")
