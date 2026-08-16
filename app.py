@@ -280,7 +280,7 @@ def ai_stress_test_routine(new_prod_name, new_prod_ing, routine_products, skin_p
 # -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
-st.title("🌸 MONAD: Active Routine Safety Guard")
+st.title("🌸 MONAD: Decode You")
 st.caption("✨ Real-time routine stress-testing and conflict detection for reactive skin.")
 
 with st.expander("💡 How Monad Protects Your Skin", expanded=False):
