@@ -1,46 +1,115 @@
+import os
 import json
 import requests
-import streamlit as st
 import base64
+import math
+import random
+from PIL import Image, ImageDraw
+import streamlit as st
 from groq import Groq
 
 # -----------------------------------------------------------------------------
-# 1. PAGE CONFIG & API CLIENT INITIALIZATION
+# 1. PAGE CONFIG & BACKGROUND GENERATOR
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
 
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
 
-# Helper function to load local image as base64 for the background
+def create_japanese_pastel_bg(width=1920, height=1080):
+    """Generates the custom background if it doesn't exist yet."""
+    image = Image.new("RGB", (width, height))
+    draw = ImageDraw.Draw(image)
+
+    color_cream = (255, 253, 208)
+    color_pink = (255, 209, 220)
+    color_green = (203, 243, 210)
+
+    for y in range(height):
+        percentage = y / float(height)
+        if percentage < 0.5:
+            local_p = percentage * 2.0
+            r = int(color_cream[0] + (color_pink[0] - color_cream[0]) * local_p)
+            g = int(color_cream[1] + (color_pink[1] - color_cream[1]) * local_p)
+            b = int(color_cream[2] + (color_pink[2] - color_cream[2]) * local_p)
+        else:
+            local_p = (percentage - 0.5) * 2.0
+            r = int(color_pink[0] + (color_green[0] - color_pink[0]) * local_p)
+            g = int(color_pink[1] + (color_green[1] - color_pink[1]) * local_p)
+            b = int(color_pink[2] + (color_green[2] - color_pink[2]) * local_p)
+        draw.line([(0, y), (width, y)], fill=(r, g, b))
+
+    overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    overlay_draw = ImageDraw.Draw(overlay)
+    sun_radius = 250
+    sun_center_x = width // 2
+    sun_center_y = height // 2 - 50
+
+    overlay_draw.ellipse(
+        [
+            (sun_center_x - sun_radius, sun_center_y - sun_radius),
+            (sun_center_x + sun_radius, sun_center_y + sun_radius),
+        ],
+        fill=(255, 150, 160, 45),
+    )
+    image = Image.alpha_composite(image.convert("RGBA"), overlay)
+
+    petal_layer = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    petal_draw = ImageDraw.Draw(petal_layer)
+    random.seed(42)
+
+    for _ in range(45):
+        px = random.randint(50, width - 50)
+        py = random.randint(50, height - 50)
+        size = random.randint(12, 28)
+        petal_color = (
+            random.randint(245, 255),
+            random.randint(175, 195),
+            random.randint(190, 210),
+            random.randint(180, 230),
+        )
+        petal_draw.ellipse([(px, py), (px + size, py + int(size * 0.6))], fill=petal_color)
+        petal_draw.ellipse(
+            [(px + int(size * 0.2), py - int(size * 0.2)), (px + size, py + size)],
+            fill=petal_color,
+        )
+
+    final_background = Image.alpha_composite(image, petal_layer)
+    final_background.convert("RGB").save("japanese_pastel_background.png")
+
+# Check and generate background
+bg_filename = "japanese_pastel_background.png"
+if not os.path.exists(bg_filename):
+    create_japanese_pastel_bg()
+
 @st.cache_data
 def get_base64_of_bin_file(bin_file):
     try:
         with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
+            return base64.b64encode(f.read()).decode()
     except FileNotFoundError:
         return None
 
-img_base64 = get_base64_of_bin_file("image_21155156_2.jpg")
+img_base64 = get_base64_of_bin_file(bg_filename)
 
-# Custom Styling (Pastel + Background Image)
+# -----------------------------------------------------------------------------
+# 2. CUSTOM CSS STYLING
+# -----------------------------------------------------------------------------
 if img_base64:
     bg_style = f"""
-        .stApp {{
+        [data-testid="stAppViewContainer"] {{
             background-image: url("data:image/jpeg;base64,{img_base64}");
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
         }}
-        /* Adds a soft frosted glass overlay so text remains readable */
         [data-testid="stAppViewContainer"] > .main {{
-            background-color: rgba(255, 255, 255, 0.65); 
+            background-color: rgba(255, 255, 255, 0.75) !important; 
         }}
     """
 else:
     bg_style = """
-        .stApp {
+        [data-testid="stAppViewContainer"] {
             background: linear-gradient(135deg, #fff5f7 0%, #fefcf0 50%, #f0f7f4 100%);
         }
     """
@@ -50,21 +119,27 @@ st.markdown(
     <style>
     {bg_style}
     
-    html, body, [data-testid="stAppViewContainer"] {{
+    html, body {{
         overscroll-behavior-y: none !important;
     }}
 
+    /* FORCE TEXT COLORS FOR LIGHT BACKGROUND */
     h1, h2, h3, h4, h5, h6 {{
         color: #5c4b51 !important;
     }}
+    p, li, span, label, div.stMarkdown, .st-emotion-cache-16idsys p {{
+        color: #4a4045 !important;
+    }}
 
+    /* Input Fields */
     input, textarea, select {{
-        background-color: rgba(255, 255, 255, 0.9) !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
         color: #4a4045 !important;
         border: 1px solid #e8d7dc !important;
         border-radius: 8px !important;
     }}
 
+    /* Buttons */
     .stButton>button {{
         background-color: #f48fb1 !important;
         color: white !important;
@@ -78,10 +153,15 @@ st.markdown(
         color: white !important;
     }}
 
+    /* Expanders & Containers */
     div[data-testid="stExpander"], div.stContainer {{
-        background-color: rgba(255, 255, 255, 0.85);
-        border: 1px solid #f3e5f5;
-        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.85) !important;
+        border: 1px solid #f3e5f5 !important;
+        border-radius: 10px !important;
+    }}
+    
+    div[data-testid="stExpander"] p {{
+        color: #4a4045 !important;
     }}
     </style>
     """,
@@ -89,7 +169,7 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
-# 2. INGREDIENT RETRIEVAL PIPELINE
+# 3. INGREDIENT RETRIEVAL PIPELINE
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300)
 def fetch_from_open_beauty_facts(query):
@@ -152,8 +232,9 @@ def parse_ingredient_badges(ingredients_text):
     return found_replenish, found_actives, found_irritants
 
 # -----------------------------------------------------------------------------
-# 3. AI ENGINES
+# 4. AI ENGINES (WITH CACHING ADDED)
 # -----------------------------------------------------------------------------
+@st.cache_data(show_spinner=False)
 def ai_analyze_product(product_name, ingredients, skin_profile):
     if not groq_client:
         return None
@@ -208,6 +289,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         st.error(f"AI Generation Error: {e}")
         return None
 
+@st.cache_data(show_spinner=False)
 def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
     if not groq_client:
         return None
@@ -242,7 +324,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
         return None
 
 # -----------------------------------------------------------------------------
-# 4. MAIN INTERFACE LAYOUT
+# 5. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
 st.title("🌸 MONAD: Biological Watchdog")
 st.caption("✨ Multi-source database engine with personalized clinical forecasting.")
@@ -328,10 +410,12 @@ with tab_single:
                     if spectrum_data:
                         timeframes = list(spectrum_data.keys())
                         
+                        # Added state key to prevent resetting on interaction
                         selected_time = st.select_slider(
                             "Slide to view long-term biological impact:",
                             options=timeframes,
-                            value=timeframes[0]
+                            value=timeframes[0],
+                            key="spectrum_slider" 
                         )
                         
                         st.info(f"**{selected_time} Impact:** {spectrum_data[selected_time]}")
