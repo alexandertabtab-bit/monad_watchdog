@@ -9,16 +9,24 @@ from groq import Groq
 # -----------------------------------------------------------------------------
 
 
-
-
 st.set_page_config(
     page_title="Monad Watchdog", page_icon="🌸", layout="centered"
 )
 
-# CSS to fix mobile pull-to-refresh
+# Initialize the Groq key securely from Streamlit secrets
+GROQ_KEY = st.secrets.get("GROQ_API_KEY", "")
+
+# Custom CSS for background design, theme, and mobile pull-to-refresh fix
 st.markdown(
     """
     <style>
+    /* Restores your custom app background and container styling */
+    .stApp {
+        background-color: #0d0f18;
+        background-image: radial-gradient(circle at 50% 10%, #1a1025 0%, #0d0f18 70%);
+        color: #f8f9fa;
+    }
+    
     html, body, [data-testid="stAppViewContainer"] {
         overscroll-behavior-y: none !important;
     }
@@ -49,27 +57,22 @@ with tab1:
     # ==========================================
     st.markdown("### 🔍 Unified Search & Input Section")
 
-    # Grouped container for search tools
     with st.container():
-        # Quick Search / Normal Product Search
         search_query = st.text_input(
             "Quick Search (Type brand or product name):",
             placeholder="e.g., CeraVe, La Roche-Posay, The Ordinary...",
         )
 
-        # Barcode Text Input
         barcode_query = st.text_input(
             "Or Enter Barcode Number:",
             placeholder="Type barcode digits if available...",
         )
 
-        # Optional: Compact Camera Scan Trigger
         with st.expander("📸 Optional: Scan Barcode via Camera"):
             camera_image = st.camera_input(
                 "Take a photo of the barcode", label_visibility="collapsed"
             )
 
-        # Skin Type & Specifications (Grouped inside search/setup phase)
         st.markdown("#### ⚙️ Customize Your Skin Profile (Personalized Analysis)")
         col_skin1, col_skin2 = st.columns(2)
         with col_skin1:
@@ -89,7 +92,6 @@ with tab1:
                 ["Healthy / Resilient", "Compromised / Irritated", "Dehydrated"],
             )
 
-        # Main action search button
         search_triggered = st.button(
             "Run Product Analysis", type="primary", use_container_width=True
         )
@@ -102,16 +104,21 @@ with tab1:
     st.markdown("### 📊 Results & Product Info")
 
     if search_triggered:
-        if search_query:
-            st.success(f"Analyzing product name: **{search_query}**")
-        elif barcode_query:
-            st.success(f"Analyzing barcode number: **{barcode_query}**")
-        elif camera_image:
-            st.success("Analyzing captured barcode image...")
-        else:
-            st.warning(
-                "Please enter a product name, barcode, or scan an image to run analysis."
+        if not GROQ_KEY:
+            st.error(
+                "⚠️ Groq API Key is missing. Please add it to your Streamlit Cloud Secrets."
             )
+        else:
+            if search_query:
+                st.success(f"Analyzing product name: **{search_query}**")
+            elif barcode_query:
+                st.success(f"Analyzing barcode number: **{barcode_query}**")
+            elif camera_image:
+                st.success("Analyzing captured barcode image...")
+            else:
+                st.warning(
+                    "Please enter a product name, barcode, or scan an image to run analysis."
+                )
     else:
         st.info(
             "👆 Fill out your search query or barcode above and click 'Run Product Analysis' to view results."
