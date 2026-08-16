@@ -241,6 +241,75 @@ if user_query:
                     st.markdown("#### ⚠️ Cons")
                     for c in ai_data.get("cons", []):
                         st.markdown(f"- {c}")
+                        # Run AI Clinical Analysis
+        if GROQ_KEY:
+            with st.spinner("🤖 Monad AI analyzing clinical protocol & formula spectrum..."):
+                ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'])
+                
+            if ai_data:
+                st.markdown("### 🛡️ AI Biological Summary")
+                st.write(ai_data.get("analysis", ""))
+                
+                col_p, col_c = st.columns(2)
+                with col_p:
+                    st.markdown("#### ✅ Key Pros")
+                    for p in ai_data.get("pros", []):
+                        st.markdown(f"- {p}")
+                with col_c:
+                    st.markdown("#### ⚠️ Key Cons")
+                    for c in ai_data.get("cons", []):
+                        st.markdown(f"- {c}")
+
+                # -------------------------------------------------------------
+                # COLLAPSIBLE / SLIDING DETAIL PANELS (KEEP MAIN VIEW CLEAN)
+                # -------------------------------------------------------------
+                st.markdown("---")
+                
+                # Collapsible Panel 1: Usage Protocol & Results Schedule
+                with st.expander("📋 View Usage Protocol & Timing Details", expanded=False):
+                    protocol = ai_data.get("usage_protocol", {})
+                    if protocol:
+                        p_col1, p_col2 = st.columns(2)
+                        with p_col1:
+                            st.markdown(f"**Frequency:** {protocol.get('frequency', 'N/A')}")
+                            st.markdown(f"**Timing (AM/PM):** {protocol.get('time_of_day', 'N/A')}")
+                        with p_col2:
+                            st.markdown(f"**Routine Order:** {protocol.get('application_step', 'N/A')}")
+                            st.markdown(f"**Expected Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
+
+                # Collapsible Panel 2: Product Longevity Spectrum
+                with st.expander("⏳ View Detailed Longevity Spectrum (Day 1 to Year 10)", expanded=False):
+                    spectrum_data = ai_data.get("spectrum", {})
+                    if spectrum_data:
+                        spec_tabs = st.tabs(list(spectrum_data.keys()))
+                        for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
+                            with t_tab:
+                                st.write(f"**{tf} Cellular Impact:** {text}")
+
+                # Collapsible Panel 3: Interaction & Irritation Assistant
+                with st.expander("🩺 Check Skin Irritation & Product Layering Compatibility", expanded=False):
+                    st.caption("Ask specific questions about skin flare-ups, irritation, or combining this product with other routines.")
+                    user_concern = st.text_area(
+                        "Describe your skin condition or routine stacking query:",
+                        placeholder="e.g., I have skin irritation around my cheeks, or I am using 10% Azelaic Acid with this product...",
+                        key="expander_concern"
+                    )
+
+                    if st.button("Analyze Medical Interaction / Irritation") and user_concern:
+                        with st.spinner("Analyzing pharmacological interactions..."):
+                            interaction_report = ai_analyze_interaction(
+                                selected_product['label'], 
+                                selected_product['ingredients'], 
+                                user_concern
+                            )
+                            if interaction_report:
+                                st.markdown("---")
+                                st.markdown(interaction_report)
+
+                # Collapsible Panel 4: Medical References
+                with st.expander("📚 View Grounded Medical Sources & Citations", expanded=False):
+                    for src in ai_data.get("medical_sources", []):
+                        st.markdown(f"- *{src}*")
                 
                 # Dynamic Spectrum
                 st.markdown("---")
