@@ -5,13 +5,62 @@ from groq import Groq
 import streamlit.components.v1 as components
 
 # -----------------------------------------------------------------------------
-# 1. SETUP & API INITIALIZATION
+# 1. SETUP & CUSTOM DREAMY NATURE THEME (CSS)
 # -----------------------------------------------------------------------------
-st.set_page_config(page_title="Monad Watchdog", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="Monad Watchdog", page_icon="🌸", layout="centered")
+
+# Dreamy Nocturnal Nature Aesthetic (Deep Violet, Emerald Glow, Rose & Cyan)
+st.markdown("""
+<style>
+    /* Main Background & Fonts */
+    .stApp {
+        background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #1e1b4b 100%);
+        color: #e2e8f0;
+    }
+    
+    /* Card Container Styles */
+    div[data-testid="stExpander"], div[data-testid="stVerticalBlock"] > div {
+        border-radius: 12px;
+    }
+    
+    /* Inputs Styling */
+    input {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #6366f1 !important;
+        border-radius: 10px !important;
+    }
+    
+    /* Buttons Styling */
+    .stButton > button {
+        background: linear-gradient(90deg, #ec4899 0%, #8b5cf6 100%);
+        color: white;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        box-shadow: 0 0 15px rgba(236, 72, 153, 0.5);
+        transform: translateY(-1px);
+    }
+    
+    /* Glowing Accent Headings */
+    h1, h2, h3 {
+        color: #f472b6 !important;
+        text-shadow: 0 0 10px rgba(244, 114, 182, 0.3);
+    }
+    h4 {
+        color: #38bdf8 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Retrieve Groq API Key safely from Secrets
 GROQ_KEY = st.secrets.get("GROQ_API_KEY", None)
 groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
+
 
 # -----------------------------------------------------------------------------
 # 2. MULTI-SOURCE INGREDIENT RETRIEVAL PIPELINE
@@ -158,22 +207,22 @@ def ai_analyze_interaction(product_name, ingredients, user_concern):
 
 
 # -----------------------------------------------------------------------------
-# 4. STREAMLIT INTERFACE & LIVE SEARCH COMPONENT
+# 4. STREAMLIT INTERFACE & INTERACTIVE APP
 # -----------------------------------------------------------------------------
-st.title("⚡ MONAD: Biological Product Watchdog")
-st.caption("Multi-source database engine paired with Groq AI dynamic clinical forecasting.")
+st.title("🌸 MONAD: Biological Watchdog")
+st.caption("✨ Multi-source database engine paired with Groq AI dynamic clinical forecasting.")
 
 st.markdown("> **Medical Disclaimer:** *Monad provides research-backed biological ingredient analysis for educational and barrier-monitoring purposes. Consult a dermatologist for active clinical treatment.*")
 
 if not GROQ_KEY:
     st.warning("⚠️ Groq API Key not detected in Streamlit Secrets. AI dynamic features are disabled.")
 
-# Live Autocomplete Data List HTML/JS Component
+# Live Suggestions HTML Component
 html_datalist = """
-<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin-bottom: 5px;">
-    <label style="font-size: 14px; font-weight: 600; color: #1e293b;">⚡ Instant Live Suggestions (Type to see common matches):</label>
-    <input list="skincare_suggestions" id="live_input" placeholder="Type brand name (e.g., CeraVe, La Roche-Posay, The Ordinary)..." 
-           style="width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 15px; outline: none; background-color: #f8fafc; color: #0f172a;"/>
+<div style="font-family: sans-serif; margin-bottom: 5px;">
+    <label style="font-size: 14px; font-weight: 600; color: #38bdf8;">⚡ Instant Suggestions (Type to see popular products):</label>
+    <input list="skincare_suggestions" id="live_input" placeholder="Type brand (e.g., CeraVe, La Roche-Posay, The Ordinary)..." 
+           style="width: 100%; padding: 10px; margin-top: 6px; border-radius: 8px; border: 1px solid #6366f1; font-size: 15px; outline: none; background-color: #1e293b; color: #f8fafc;"/>
     <datalist id="skincare_suggestions">
         <option value="CeraVe Hydrating Facial Cleanser">
         <option value="CeraVe Resurfacing Retinol Serum">
@@ -183,14 +232,13 @@ html_datalist = """
         <option value="La Roche-Posay Anthelios SPF 50+">
         <option value="Byphasse Micellar Make-up Remover">
         <option value="Paula's Choice 2% BHA Liquid Exfoliant">
-        <option value="Bioderma Sensibio H2O Micellar Water">
     </datalist>
 </div>
 """
 components.html(html_datalist, height=85)
 
 # Primary Query Trigger
-user_query = st.text_input("🔍 Search database for exact product or brand name:", placeholder="e.g. CeraVe, Byphasse, Retinol...")
+user_query = st.text_input("🔍 Search product or brand name:", placeholder="e.g. CeraVe, Byphasse, Retinol...")
 
 if user_query:
     st.divider()
@@ -200,38 +248,26 @@ if user_query:
         
     if matches:
         options = [f"{m['label']} ({m['source']})" for m in matches]
-        selected_option = st.selectbox(f"Found {len(matches)} verified matches across registries:", options=options)
+        selected_option = st.selectbox(f"Verified matches ({len(matches)} found):", options=options)
         
         selected_product = next(m for m in matches if f"{m['label']} ({m['source']})" == selected_option)
         
         st.markdown("---")
         st.success(f"**Loaded Product:** {selected_product['label']}")
-        st.caption(f"Source Database: {selected_product['source']}")
         
-        st.markdown("### 🔬 Extracted INCI Label")
-        st.info(selected_product["ingredients"])
-        
-        # Run AI Clinical Analysis
+        # -------------------------------------------------------------
+        # MAIN VIEW: CORE NECESSARY INFO ONLY
+        # -------------------------------------------------------------
         if GROQ_KEY:
-            with st.spinner("🤖 Monad AI analyzing clinical protocol & formula spectrum..."):
+            with st.spinner("✨ Monad AI formulating custom product analysis..."):
                 ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'])
                 
             if ai_data:
-                st.markdown("### 🛡️ AI Biological Breakdown")
+                # 1. AI Summary
+                st.markdown("### 🛡️ AI Biological Summary")
                 st.write(ai_data.get("analysis", ""))
                 
-                # Dedicated Administration & Dosing Protocol
-                protocol = ai_data.get("usage_protocol", {})
-                if protocol:
-                    st.markdown("#### 📋 Clinical Usage & Dosing Protocol")
-                    p_col1, p_col2 = st.columns(2)
-                    with p_col1:
-                        st.markdown(f"**Frequency:** {protocol.get('frequency', 'N/A')}")
-                        st.markdown(f"**Timing:** {protocol.get('time_of_day', 'N/A')}")
-                    with p_col2:
-                        st.markdown(f"**Routine Order:** {protocol.get('application_step', 'N/A')}")
-                        st.markdown(f"**Expected Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
-
+                # 2. Pros & Cons
                 col_p, col_c = st.columns(2)
                 with col_p:
                     st.markdown("#### ✅ Pros")
@@ -241,61 +277,49 @@ if user_query:
                     st.markdown("#### ⚠️ Cons")
                     for c in ai_data.get("cons", []):
                         st.markdown(f"- {c}")
-                        # Run AI Clinical Analysis
-        if GROQ_KEY:
-            with st.spinner("🤖 Monad AI analyzing clinical protocol & formula spectrum..."):
-                ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'])
+
+                # 3. Customized Longevity Spectrum
+                st.markdown("---")
+                st.markdown("### ⏳ Customized Longevity Spectrum")
+                st.caption("Forecasted skin cell impact over time:")
                 
-            if ai_data:
-                st.markdown("### 🛡️ AI Biological Summary")
-                st.write(ai_data.get("analysis", ""))
-                
-                col_p, col_c = st.columns(2)
-                with col_p:
-                    st.markdown("#### ✅ Key Pros")
-                    for p in ai_data.get("pros", []):
-                        st.markdown(f"- {p}")
-                with col_c:
-                    st.markdown("#### ⚠️ Key Cons")
-                    for c in ai_data.get("cons", []):
-                        st.markdown(f"- {c}")
+                spectrum_data = ai_data.get("spectrum", {})
+                if spectrum_data:
+                    spec_tabs = st.tabs(list(spectrum_data.keys()))
+                    for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
+                        with t_tab:
+                            st.write(f"**{tf} Impact:** {text}")
 
                 # -------------------------------------------------------------
-                # COLLAPSIBLE / SLIDING DETAIL PANELS (KEEP MAIN VIEW CLEAN)
+                # DEDICATED DETAILS SECTION (EXPANDABLE - NO CLUTTER)
                 # -------------------------------------------------------------
                 st.markdown("---")
-                
-                # Collapsible Panel 1: Usage Protocol & Results Schedule
-                with st.expander("📋 View Usage Protocol & Timing Details", expanded=False):
+                with st.expander("🔬 Deep Dive Clinical Lab (Dosing, Irritation Assistant & Citations)", expanded=False):
+                    
+                    # Detailed Part 1: Usage Protocol
+                    st.markdown("#### 📋 Usage Protocol & Dosing")
                     protocol = ai_data.get("usage_protocol", {})
                     if protocol:
                         p_col1, p_col2 = st.columns(2)
                         with p_col1:
                             st.markdown(f"**Frequency:** {protocol.get('frequency', 'N/A')}")
-                            st.markdown(f"**Timing (AM/PM):** {protocol.get('time_of_day', 'N/A')}")
+                            st.markdown(f"**Timing:** {protocol.get('time_of_day', 'N/A')}")
                         with p_col2:
                             st.markdown(f"**Routine Order:** {protocol.get('application_step', 'N/A')}")
-                            st.markdown(f"**Expected Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
+                            st.markdown(f"**Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
 
-                # Collapsible Panel 2: Product Longevity Spectrum
-                with st.expander("⏳ View Detailed Longevity Spectrum (Day 1 to Year 10)", expanded=False):
-                    spectrum_data = ai_data.get("spectrum", {})
-                    if spectrum_data:
-                        spec_tabs = st.tabs(list(spectrum_data.keys()))
-                        for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
-                            with t_tab:
-                                st.write(f"**{tf} Cellular Impact:** {text}")
-
-                # Collapsible Panel 3: Interaction & Irritation Assistant
-                with st.expander("🩺 Check Skin Irritation & Product Layering Compatibility", expanded=False):
-                    st.caption("Ask specific questions about skin flare-ups, irritation, or combining this product with other routines.")
+                    st.markdown("---")
+                    
+                    # Detailed Part 2: Interactive Irritation & Stacking Assistant
+                    st.markdown("#### 🩺 Clinical Interaction & Skin Irritation Bar")
+                    st.caption("Have skin irritation or combining with other actives? Ask here:")
                     user_concern = st.text_area(
-                        "Describe your skin condition or routine stacking query:",
-                        placeholder="e.g., I have skin irritation around my cheeks, or I am using 10% Azelaic Acid with this product...",
+                        "Describe your condition or layering query:",
+                        placeholder="e.g., I have skin irritation on my cheeks, or I use Retinol at night...",
                         key="expander_concern"
                     )
 
-                    if st.button("Analyze Medical Interaction / Irritation") and user_concern:
+                    if st.button("Analyze Medical Interaction") and user_concern:
                         with st.spinner("Analyzing pharmacological interactions..."):
                             interaction_report = ai_analyze_interaction(
                                 selected_product['label'], 
@@ -306,73 +330,32 @@ if user_query:
                                 st.markdown("---")
                                 st.markdown(interaction_report)
 
-                # Collapsible Panel 4: Medical References
-                with st.expander("📚 View Grounded Medical Sources & Citations", expanded=False):
+                    st.markdown("---")
+                    
+                    # Detailed Part 3: Medical Sources
+                    st.markdown("#### 📚 Grounded Medical Sources")
                     for src in ai_data.get("medical_sources", []):
                         st.markdown(f"- *{src}*")
-                
-                # Dynamic Spectrum
+
+                # -------------------------------------------------------------
+                # DEDICATED COMPACT INGREDIENTS BOX AT THE VERY BOTTOM
+                # -------------------------------------------------------------
                 st.markdown("---")
-                st.markdown("### ⏳ Customized Product Longevity Spectrum")
-                st.caption("AI-forecasted skin cell impact tailored specifically to this formula:")
-                
-                spectrum_data = ai_data.get("spectrum", {})
-                if spectrum_data:
-                    spec_tabs = st.tabs(list(spectrum_data.keys()))
-                    for t_tab, (tf, text) in zip(spec_tabs, spectrum_data.items()):
-                        with t_tab:
-                            st.write(f"**{tf} Impact:** {text}")
-
-                # Medical Literature References
-                st.markdown("---")
-                st.markdown("#### 📚 Grounded Medical Sources")
-                for src in ai_data.get("medical_sources", []):
-                    st.markdown(f"- *{src}*")
-
-                # Custom Interaction & Irritation Query Assistant
-                st.markdown("---")
-                st.markdown("### 🩺 Clinical Interaction & Irritation Assistant")
-                st.caption("Ask specific questions about skin flare-ups, irritation, or combining this product with other routines.")
-
-                user_concern = st.text_area(
-                    "Describe your skin condition or routine stacking query:",
-                    placeholder="e.g., I have skin irritation around my cheeks, or I am using 10% Azelaic Acid with this product..."
-                )
-
-                if st.button("Analyze Medical Interaction / Irritation") and user_concern:
-                    with st.spinner("Analyzing pharmacological interactions..."):
-                        interaction_report = ai_analyze_interaction(
-                            selected_product['label'], 
-                            selected_product['ingredients'], 
-                            user_concern
-                        )
-                        if interaction_report:
-                            st.markdown("---")
-                            st.markdown(interaction_report)
+                with st.expander("🏷️ Extracted INCI Ingredient Formula", expanded=False):
+                    st.caption(f"Source Registry: {selected_product['source']}")
+                    st.info(selected_product["ingredients"])
 
     else:
         st.warning(f"No database matches found for '{user_query}'. Using AI chemical knowledge base fallback...")
-        
         if GROQ_KEY:
-            with st.spinner("🤖 Consulting Monad AI Knowledge Base..."):
+            with st.spinner("✨ Consulting Monad AI Knowledge Base..."):
                 ai_fallback = ai_analyze_product(user_query, "Common market formulation for " + user_query)
                 
             if ai_fallback:
-                st.markdown("### 🛡️ AI Estimated Formulation Analysis")
+                st.markdown("### 🛡️ AI Biological Summary")
                 st.write(ai_fallback.get("analysis", ""))
                 
-                protocol = ai_fallback.get("usage_protocol", {})
-                if protocol:
-                    st.markdown("#### 📋 Estimated Usage Protocol")
-                    p_col1, p_col2 = st.columns(2)
-                    with p_col1:
-                        st.markdown(f"**Frequency:** {protocol.get('frequency', 'N/A')}")
-                        st.markdown(f"**Timing:** {protocol.get('time_of_day', 'N/A')}")
-                    with p_col2:
-                        st.markdown(f"**Routine Order:** {protocol.get('application_step', 'N/A')}")
-                        st.markdown(f"**Expected Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
-
-                st.markdown("### ⏳ Estimated Longevity Spectrum")
+                st.markdown("### ⏳ Customized Longevity Spectrum")
                 spectrum_data = ai_fallback.get("spectrum", {})
                 if spectrum_data:
                     spec_tabs = st.tabs(list(spectrum_data.keys()))
