@@ -1,5 +1,3 @@
-
-
 import os
 import json
 import requests
@@ -169,7 +167,7 @@ st.markdown(
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300)
 def fetch_registry_data(api_url):
-    headers = {"User-Agent": "MonadIntelligence - Research/Educational - v1.0"}
+    headers = {"User-Agent": "MonadDecodeYou - Research/Educational - v1.0"}
     try:
         res = requests.get(api_url, headers=headers, timeout=5)
         if res.status_code == 200:
@@ -241,10 +239,10 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     - Current Systemic / Topical Medications: {medications_str}
 
     Strict Enforcement Rules:
-    1. If medications (e.g., retinoids, photosensitizing drugs, acne medications) conflict with active ingredients, issue an immediate critical warning.
-    2. If pregnancy/postpartum is selected, flag any contraindicated actives (like high-strength retinoids or salicylic acid abuse).
-    3. If 'Sensory / Chemical Overload or Contact Allergy' is flagged, strictly evaluate synthetic fragrances, essential oils, and stinging enhancers.
-    4. If 'Fungal Acne (Malassezia-sensitive)' is flagged, scan the INCI list for unsafe esters, oils, or polysorbates.
+    1. If medications conflict with active ingredients, issue an immediate critical warning.
+    2. If pregnancy/postpartum is selected, flag any contraindicated actives.
+    3. If 'Sensory / Chemical Overload or Contact Allergy' is flagged, strictly evaluate synthetic fragrances and essential oils.
+    4. If 'Fungal Acne (Malassezia-sensitive)' is flagged, scan the INCI list for unsafe esters or oils.
 
     Product: {product_name}
     Ingredients: {ingredients}
@@ -336,18 +334,18 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
         st.error(f"Compatibility Error: {e}")
         return None
 
-# ---------------------------------------------
+# -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
-# ---------------------------------------------
-st.title("🌸 MONAD: Biological Intelligence Engine")
-st.caption("✨ Advanced multi-source chemical analysis tailored to your complete biological profile.")
+# -----------------------------------------------------------------------------
+st.title("🏛️ MONAD: Decode You")
+st.caption("✨ Advanced molecular intelligence engine tailored to your complete biological profile.")
 
 # Onboarding guide for new users
 with st.expander("💡 What is Monad? (How it works)", expanded=False):
     st.markdown("""
-    Welcome to **Monad**! Here is how the concept works:
+    Welcome to **Monad: Decode You**! Here is how the concept works:
     1. **Set Your Complete Biological Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
-    2. **Search or Scan:** Look up any skincare product by name (even with typos!) or barcode. Monad extracts the exact INCI ingredient list.
+    2. **Search or Scan:** Look up any product by name (even with typos!) or barcode. Monad extracts the exact INCI ingredient list.
     3. **Personalized Biological Forecast:** Monad's AI engine acts as a precision clinical watchdog, scanning for contraindications against your exact medical background and medications.
     4. **The Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to see customized clinical milestones tailored to your biology!
     """)
@@ -443,7 +441,7 @@ with tab_single:
             st.markdown("---")
 
             if GROQ_KEY:
-                with st.spinner("✨ Monad Biological Intelligence Engine analyzing formula against your profile..."):
+                with st.spinner("✨ Monad decoding formula against your biological profile..."):
                     ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'], user_profile)
                     
                 if ai_data:
@@ -538,5 +536,3 @@ with tab_stack:
                 )
                 if report:
                     st.markdown(report)
-
-```
