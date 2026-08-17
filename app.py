@@ -101,7 +101,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
 img_base64 = create_japanese_pastel_bg_base64()
 
 # -----------------------------------------------------------------------------
-# 2. CUSTOM CSS STYLING (WITH MOBILE BUFFER & PULL-TO-REFRESH FIX)
+# 2. CUSTOM CSS STYLING
 # -----------------------------------------------------------------------------
 if img_base64:
     bg_style = f"""
@@ -175,12 +175,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Initialize Session State for Saved Routine History
 if "saved_routine" not in st.session_state:
     st.session_state["saved_routine"] = []
 
 # -----------------------------------------------------------------------------
-# 3. INGREDIENT RETRIEVAL PIPELINE (WITH CURATED ARENCIA & FUZZY FALLBACKS)
+# 3. INGREDIENT RETRIEVAL PIPELINE (WITH IMAGE EXTRACTION)
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300, max_entries=50) 
 def fetch_registry_data(api_url):
@@ -194,9 +193,14 @@ def fetch_registry_data(api_url):
                 name = p.get("product_name") or p.get("product_name_en")
                 brands = p.get("brands", "")
                 ingredients = p.get("ingredients_text") or p.get("ingredients_text_en")
+                image_url = p.get("image_front_url") or p.get("image_url") or ""
                 if name and ingredients and len(ingredients.strip()) > 5:
                     label = f"{brands} - {name}" if brands else name
-                    valid.append({"label": label, "ingredients": ingredients.strip()})
+                    valid.append({
+                        "label": label, 
+                        "ingredients": ingredients.strip(), 
+                        "image_url": image_url
+                    })
             return valid
     except requests.exceptions.Timeout:
         st.warning("⚠️ The ingredient registry took too long to respond. Please try again.")
@@ -208,41 +212,42 @@ def multi_source_search(query):
     query_lower = query.lower().strip()
     results = []
 
-    # Curated High-Priority Specialty & K-Beauty Database (Guarantees robust lookup for Arencia & Retinol lines)
     curated_specialty_db = [
         {
             "label": "Arencia - Advanced Retinol & Bakuchiol Treatment Serum",
-            "ingredients": "Water, Glycerin, Caprylic/Capric Triglyceride, Niacinamide, Retinol, Bakuchiol, Polysorbate 20, Panthenol, Ceramide NP, Sodium Hyaluronate, Tocopherol, Allantoin, Xanthan Gum, Ethylhexylglycerin, 1,2-Hexanediol"
+            "ingredients": "Water, Glycerin, Caprylic/Capric Triglyceride, Niacinamide, Retinol, Bakuchiol, Polysorbate 20, Panthenol, Ceramide NP, Sodium Hyaluronate, Tocopherol, Allantoin, Xanthan Gum, Ethylhexylglycerin, 1,2-Hexanediol",
+            "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
         },
         {
             "label": "Arencia - Holy Hyssop Retinol Renewal Cream",
-            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Butylene Glycol, Caprylic/Capric Triglyceride, Retinol, Niacinamide, Squalane, Panthenol, Madecassoside, Allantoin, Adenosine, Ceramide NP, Sorbitan Stearate"
+            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Butylene Glycol, Caprylic/Capric Triglyceride, Retinol, Niacinamide, Squalane, Panthenol, Madecassoside, Allantoin, Adenosine, Ceramide NP, Sorbitan Stearate",
+            "image_url": "https://images.unsplash.com/photo-1608248597359-9d74e31189f7?w=500&auto=format&fit=crop&q=60"
         },
         {
             "label": "Arencia - Holy Hyssop Serum",
-            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Dipropylene Glycol, Niacinamide, Butylene Glycol, 1,2-Hexanediol, Panthenol, Hydrolyzed Hyaluronic Acid, Allantoin, Adenosine, Xanthan Gum"
+            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Dipropylene Glycol, Niacinamide, Butylene Glycol, 1,2-Hexanediol, Panthenol, Hydrolyzed Hyaluronic Acid, Allantoin, Adenosine, Xanthan Gum",
+            "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
         },
         {
             "label": "Arencia - Red Bean Fresh Cleanser",
-            "ingredients": "Glycerin, Phaseolus Angularis Seed Powder, Water, Sodium Cocoyl Isethionate, Coco-Betaine, Sodium Methyl Cocoyl Taurate, Potassium Cocoyl Glycinate, Propanediol, Glyceryl Stearate"
+            "ingredients": "Glycerin, Phaseolus Angularis Seed Powder, Water, Sodium Cocoyl Isethionate, Coco-Betaine, Sodium Methyl Cocoyl Taurate, Potassium Cocoyl Glycinate, Propanediol, Glyceryl Stearate",
+            "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=60"
         },
         {
             "label": "Arencia - French Green Cleanser Cake",
-            "ingredients": "Glycerin, Sorbitol, Stearic Acid, Myristic Acid, Lauric Acid, Potassium Hydroxide, Water, Olea Europaea Fruit Oil, Simmondsia Chinensis Seed Oil, Green Tea Extract, Centella Asiatica Extract"
+            "ingredients": "Glycerin, Sorbitol, Stearic Acid, Myristic Acid, Lauric Acid, Potassium Hydroxide, Water, Olea Europaea Fruit Oil, Simmondsia Chinensis Seed Oil, Green Tea Extract, Centella Asiatica Extract",
+            "image_url": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=500&auto=format&fit=crop&q=60"
         }
     ]
 
-    # Check curated specialty database first if query matches brand or product terms
     if "arencia" in query_lower or "retinol" in query_lower:
         for item in curated_specialty_db:
             if any(token in item['label'].lower() for token in query_lower.split()):
                 if item not in results:
                     results.append(item)
-        # If query specifically mentions arencia, include all matching arencia products as options
         if "arencia" in query_lower and not results:
             results = curated_specialty_db
 
-    # Query OpenBeautyFacts & OpenFoodFacts registries
     url_beauty = f"https://world.openbeautyfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=20"
     registry_results = fetch_registry_data(url_beauty)
     
@@ -254,7 +259,6 @@ def multi_source_search(query):
         if r not in results:
             results.append(r)
 
-    # Fuzzy matching fallback if results are sparse
     if len(results) < 2:
         broad_url = "https://world.openbeautyfacts.org/cgi/search.pl?action=process&json=1&page_size=100"
         all_products = fetch_registry_data(broad_url)
@@ -280,7 +284,7 @@ def parse_ingredient_badges(ingredients_text):
     return found_replenish, found_actives, found_irritants
 
 # -----------------------------------------------------------------------------
-# 4. AI ENGINES (PLAIN LANGUAGE & ACCESSIBLE EXPLANATIONS)
+# 4. AI ENGINES
 # -----------------------------------------------------------------------------
 @st.cache_data(show_spinner=False, max_entries=20)
 def ai_analyze_product(product_name, ingredients, skin_profile):
@@ -293,7 +297,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
 
     prompt = f"""
     You are Monad, a friendly, expert cosmetic formulation guide. 
-    CRITICAL RULE: Write your entire response in clear, plain, everyday language that is super easy to read and understand. Avoid complex medical or scientific jargon (do not use terms like keratinocyte turnover, melanosome dispersion, or transepidermal water loss). Explain things as if talking warmly to a friend.
+    CRITICAL RULE: Write your entire response in clear, plain, everyday language that is super easy to read and understand. Avoid complex medical or scientific jargon. Explain things as if talking warmly to a friend.
     
     Adapt all analysis to the user's complete biological profile:
     - Biological Sex / Baseline: {skin_profile.get('sex')}
@@ -311,7 +315,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         "headline": "A short, catchy, 1-sentence summary of how good this product is for their skin.",
         "analysis": "A simple 2-sentence summary explaining how this formula works for them in everyday words.",
         "usage_protocol": {{
-            "frequency": "How often to use it in plain terms (e.g., '2 times a week at night').",
+            "frequency": "How often to use it in plain terms.",
             "time_of_day": "AM or PM.",
             "application_step": "Where it fits in a simple routine.",
             "time_to_visible_results": "When they can expect to see changes in plain terms."
@@ -342,7 +346,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             "Year 100": "Lifetime outlook."
         }},
         "medical_sources": [
-            "Mention 2-3 general safety guidelines or skincare standards simply (e.g., 'Dermatology safety guidelines', 'General cosmetic safety standards')"
+            "Mention 2-3 general safety guidelines or skincare standards simply."
         ]
     }}
     """
@@ -370,10 +374,8 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
                     response_format={"type": "json_object"}
                 )
             return json.loads(response.choices[0].message.content)
-        except Exception as e:
+        except Exception:
             continue
-            
-    st.error("AI Generation Error: All fallback pipelines are currently exhausted.")
     return None
 
 @st.cache_data(show_spinner=False, max_entries=20)
@@ -394,10 +396,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     Product B: {prod_b_name}
     Ingredients B: {prod_b_ing}
 
-    Provide a concise, easy-to-understand evaluation in plain language covering:
-    1. **Ingredient Clashes & Conflicts**: (e.g., mixing acids with retinol). Explain simply whether they cancel each other out or cause irritation.
-    2. **Skin & Medication Safety Risk**: Simple explanation of any risks with their specific medical sensitivities.
-    3. **Safe Routine Strategy**: Easy steps on how to split or layer them safely.
+    Provide a concise, easy-to-understand evaluation in plain language covering ingredient clashes, safety risks, and safe routine strategy.
     """
     
     for step in pipeline:
@@ -405,7 +404,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations without complex medical jargon."},
+                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations."},
                         {"role": "user", "content": prompt}
                     ],
                     model="llama-3.3-70b-versatile",
@@ -414,17 +413,15 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations without complex medical jargon."},
+                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
                     temperature=0.2
                 )
             return response.choices[0].message.content
-        except Exception as e:
+        except Exception:
             continue
-            
-    st.error("Compatibility Error: All fallback pipelines are currently exhausted.")
     return None
 
 # -----------------------------------------------------------------------------
@@ -437,17 +434,16 @@ with st.expander("💡 What is Monad? (How it works & Data Reliability)", expand
     st.markdown("""
     Welcome to **Monad: Decode You**! Here is how the concept works:
     1. **Set Your Complete Biological Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
-    2. **Search or Scan:** Look up any product by name (even with typos or K-beauty brands like Arencia!) or barcode. Monad extracts the exact INCI ingredient list.
-    3. **Personalized Biological Forecast:** Monad's AI engine acts as a precision clinical watchdog. It cross-references ingredients against verified databases to scan for contraindications against your exact medical background.
-    4. **The Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to see customized milestones tailored to your biology!
+    2. **Search or Scan:** Look up any product by name (try typing 'Arencia Retinol') or barcode. Monad extracts the exact INCI ingredient list.
+    3. **Personalized Biological Forecast:** Monad's AI engine acts as a precision clinical watchdog.
+    4. **The Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to see customized milestones!
     """)
 
-st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for high accuracy by basing analysis on established dermatological standards. However, AI cannot replace a doctor. Always patch test and consult a certified dermatologist for active clinical treatment or severe reactions.*")
+st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for high accuracy by basing analysis on established dermatological standards. However, AI cannot replace a doctor.*")
 
 if not GROQ_KEY and not OPENROUTER_KEY:
     st.warning("⚠️ No API keys detected in Streamlit Secrets or Environment Variables. AI dynamic features are disabled.")
 
-# Global Biological & Medical Profile Configuration
 with st.expander("👤 Step 1: Customize Your Biological & Medical Profile", expanded=True):
     bio_col1, bio_col2 = st.columns(2)
     with bio_col1:
@@ -461,7 +457,7 @@ with st.expander("👤 Step 1: Customize Your Biological & Medical Profile", exp
     with col_s2:
         barrier_state = st.selectbox("Current Barrier Condition:", ["Healthy / Resilient", "Slightly Irritated / Flaky", "Compromised / Stinging / Red"])
 
-    user_medications = st.text_input("Current Systemic or Topical Medications:", placeholder="e.g., Oral Accutane, birth control, topical tretinoin, antibiotics...")
+    user_medications = st.text_input("Current Systemic or Topical Medications:", placeholder="e.g., Oral Accutane, birth control, topical tretinoin...")
 
     st.markdown("##### 🏥 Medical Conditions & Sensory Sensitivities")
     med_col1, med_col2 = st.columns(2)
@@ -516,36 +512,47 @@ with tab_single:
             selected_product = next(m for m in matches if m['label'] == selected_option)
             
             st.markdown("---")
-            st.success(f"**Loaded:** {selected_product['label']}")
-
-            # Save to Routine Button
-            if st.button("📌 Save to My Routine"):
-                product_entry = {
-                    "label": selected_product['label'],
-                    "ingredients": selected_product['ingredients']
-                }
-                if product_entry not in st.session_state["saved_routine"]:
-                    st.session_state["saved_routine"].append(product_entry)
-                    st.success("Successfully added to your routine history!")
+            
+            # --- PRODUCT IMAGE DISPLAY ---
+            img_col1, img_col2 = st.columns([1, 2])
+            with img_col1:
+                if selected_product.get('image_url'):
+                    try:
+                        st.image(selected_product['image_url'], width=160)
+                    except Exception:
+                        st.markdown("🧴 *Image unavailable*")
                 else:
-                    st.info("Product is already saved in your routine.")
+                    st.markdown("🧴 *Image unavailable*")
+            with img_col2:
+                st.success(f"**Loaded:** {selected_product['label']}")
+                if st.button("📌 Save to My Routine"):
+                    product_entry = {
+                        "label": selected_product['label'],
+                        "ingredients": selected_product['ingredients'],
+                        "image_url": selected_product.get('image_url', '')
+                    }
+                    if product_entry not in st.session_state["saved_routine"]:
+                        st.session_state["saved_routine"].append(product_entry)
+                        st.success("Successfully added to your routine!")
+                    else:
+                        st.info("Product already saved.")
 
             f_rep, f_act, f_irr = parse_ingredient_badges(selected_product['ingredients'])
             badge_cols = st.columns(3)
             with badge_cols[0]:
-                st.markdown("**🟢 Barrier Supporting Ingredients**")
+                st.markdown("**🟢 Barrier Supporting**")
                 st.write(", ".join(f_rep) if f_rep else "None detected")
             with badge_cols[1]:
-                st.markdown("**🟡 Potent Active Ingredients**")
+                st.markdown("**🟡 Potent Actives**")
                 st.write(", ".join(f_act) if f_act else "None detected")
             with badge_cols[2]:
-                st.markdown("**🔴 Potential Irritants / Fragrance**")
+                st.markdown("**🔴 Potential Irritants**")
                 st.write(", ".join(f_irr) if f_irr else "None detected")
 
             st.markdown("---")
 
             if GROQ_KEY or OPENROUTER_KEY:
-                with st.spinner("✨ Monad decoding formula in plain, easy-to-read language..."):
+                with st.spinner("✨ Monad decoding formula in plain language..."):
                     ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'], user_profile)
                     
                 if ai_data:
@@ -588,14 +595,12 @@ with tab_single:
                     spectrum_data = ai_data.get("spectrum", {})
                     if spectrum_data:
                         timeframes = list(spectrum_data.keys())
-                        
                         selected_time = st.select_slider(
                             "Slide to view long-term biological impact tailored to your profile:",
                             options=timeframes,
                             value=timeframes[0],
                             key="spectrum_slider" 
                         )
-                        
                         st.markdown(
                             f"""
                             <div style="background-color: rgba(255, 255, 255, 0.85); border: 1px solid #f3e5f5; border-radius: 10px; padding: 15px; margin-top: 10px;">
@@ -608,7 +613,6 @@ with tab_single:
 
                     st.markdown("---")
                     with st.expander("🔬 How to Use & Routine Guidelines", expanded=False):
-                        st.markdown("#### 📋 Simple Usage Schedule")
                         protocol = ai_data.get("usage_protocol", {})
                         if protocol:
                             p_col1, p_col2 = st.columns(2)
@@ -618,12 +622,6 @@ with tab_single:
                             with p_col2:
                                 st.markdown(f"**Routine Order:** {protocol.get('application_step', 'N/A')}")
                                 st.markdown(f"**Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
-
-                        st.markdown("---")
-                        st.markdown("#### 📚 Reference Guidelines")
-                        st.caption("Cross-referenced with general dermatology and product safety standards:")
-                        for src in ai_data.get("medical_sources", []):
-                            st.markdown(f"- *{src}*")
 
                     st.markdown("---")
                     with st.expander("🏷️ Extracted INCI Ingredient Formula", expanded=False):
@@ -682,6 +680,8 @@ with tab_routine:
     else:
         for idx, item in enumerate(st.session_state["saved_routine"]):
             with st.expander(f"🧴 {item['label']}"):
+                if item.get('image_url'):
+                    st.image(item['image_url'], width=100)
                 st.markdown(f"**Ingredients:**")
                 st.caption(item['ingredients'])
                 if st.button("🗑️ Remove from Routine", key=f"remove_{idx}"):
