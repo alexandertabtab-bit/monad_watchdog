@@ -387,6 +387,9 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
 # -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
+# Top buffer zone to absorb initial touch drag and minimize pull-to-refresh triggers in mobile wrappers
+st.markdown('<div style="height: 15px; width: 100%;"></div>', unsafe_allow_html=True)
+
 st.title("🌸 MONAD: Decode You")
 st.caption("✨ Advanced molecular intelligence engine tailored to your complete biological profile.")
 
