@@ -101,7 +101,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
 img_base64 = create_japanese_pastel_bg_base64()
 
 # -----------------------------------------------------------------------------
-# 2. CUSTOM CSS STYLING (WITH MOBILE PULL-TO-REFRESH FIX)
+# 2. CUSTOM CSS STYLING (WITH MOBILE BUFFER & PULL-TO-REFRESH FIX)
 # -----------------------------------------------------------------------------
 if img_base64:
     bg_style = f"""
@@ -110,6 +110,7 @@ if img_base64:
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            padding-top: 25px !important;
         }}
         [data-testid="stAppViewContainer"] > .main {{
             background-color: rgba(255, 255, 255, 0.75) !important; 
@@ -119,6 +120,7 @@ else:
     bg_style = """
         [data-testid="stAppViewContainer"] {
             background: linear-gradient(135deg, #fff5f7 0%, #fefcf0 50%, #f0f7f4 100%);
+            padding-top: 25px !important;
         }
     """
 
@@ -387,9 +389,6 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
 # -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
 # -----------------------------------------------------------------------------
-# Top buffer zone to absorb initial touch drag and minimize pull-to-refresh triggers in mobile wrappers
-st.markdown('<div style="height: 15px; width: 100%;"></div>', unsafe_allow_html=True)
-
 st.title("🌸 MONAD: Decode You")
 st.caption("✨ Advanced molecular intelligence engine tailored to your complete biological profile.")
 
