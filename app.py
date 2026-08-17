@@ -54,7 +54,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
             local_p = (percentage - 0.5) * 2.0
             r = int(color_pink[0] + (color_green[0] - color_pink[0]) * local_p)
             g = int(color_pink[1] + (color_green[1] - color_pink[1]) * local_p)
-            b = int(color_pink[2] + (color_green[2] - color_green[2]) * local_p)
+            b = int(color_pink[2] + (color_green[2] - color_pink[2]) * local_p)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -214,39 +214,38 @@ def multi_source_search(query):
 
     curated_specialty_db = [
         {
-            "label": "Arencia - Advanced Retinol & Bakuchiol Treatment Serum",
+            "label": "Advanced Retinol & Bakuchiol Treatment Serum",
             "ingredients": "Water, Glycerin, Caprylic/Capric Triglyceride, Niacinamide, Retinol, Bakuchiol, Polysorbate 20, Panthenol, Ceramide NP, Sodium Hyaluronate, Tocopherol, Allantoin, Xanthan Gum, Ethylhexylglycerin, 1,2-Hexanediol",
             "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
         },
         {
-            "label": "Arencia - Holy Hyssop Retinol Renewal Cream",
+            "label": "Holy Hyssop Retinol Renewal Cream",
             "ingredients": "Hyssopus Officinalis Extract, Glycerin, Butylene Glycol, Caprylic/Capric Triglyceride, Retinol, Niacinamide, Squalane, Panthenol, Madecassoside, Allantoin, Adenosine, Ceramide NP, Sorbitan Stearate",
             "image_url": "https://images.unsplash.com/photo-1608248597359-9d74e31189f7?w=500&auto=format&fit=crop&q=60"
         },
         {
-            "label": "Arencia - Holy Hyssop Serum",
+            "label": "Holy Hyssop Serum",
             "ingredients": "Hyssopus Officinalis Extract, Glycerin, Dipropylene Glycol, Niacinamide, Butylene Glycol, 1,2-Hexanediol, Panthenol, Hydrolyzed Hyaluronic Acid, Allantoin, Adenosine, Xanthan Gum",
             "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
         },
         {
-            "label": "Arencia - Red Bean Fresh Cleanser",
+            "label": "Red Bean Fresh Cleanser",
             "ingredients": "Glycerin, Phaseolus Angularis Seed Powder, Water, Sodium Cocoyl Isethionate, Coco-Betaine, Sodium Methyl Cocoyl Taurate, Potassium Cocoyl Glycinate, Propanediol, Glyceryl Stearate",
             "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=60"
         },
         {
-            "label": "Arencia - French Green Cleanser Cake",
+            "label": "French Green Cleanser Cake",
             "ingredients": "Glycerin, Sorbitol, Stearic Acid, Myristic Acid, Lauric Acid, Potassium Hydroxide, Water, Olea Europaea Fruit Oil, Simmondsia Chinensis Seed Oil, Green Tea Extract, Centella Asiatica Extract",
             "image_url": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=500&auto=format&fit=crop&q=60"
         }
     ]
 
-    if "arencia" in query_lower or "retinol" in query_lower:
-        for item in curated_specialty_db:
-            if any(token in item['label'].lower() for token in query_lower.split()):
-                if item not in results:
-                    results.append(item)
-        if "arencia" in query_lower and not results:
-            results = curated_specialty_db
+    for item in curated_specialty_db:
+        if any(token in item['label'].lower() for token in query_lower.split()):
+            if item not in results:
+                results.append(item)
+    if "retinol" in query_lower and not results:
+        results = curated_specialty_db
 
     url_beauty = f"https://world.openbeautyfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=20"
     registry_results = fetch_registry_data(url_beauty)
@@ -433,10 +432,11 @@ st.caption("✨ Advanced molecular intelligence engine tailored to your complete
 with st.expander("💡 What is Monad? (How it works & Data Reliability)", expanded=False):
     st.markdown("""
     Welcome to **Monad: Decode You**! Here is how the concept works:
-    1. **Set Your Complete Biological Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
-    2. **Search or Scan:** Look up any product by name (try typing 'Arencia Retinol') or barcode. Monad extracts the exact INCI ingredient list.
-    3. **Personalized Biological Forecast:** Monad's AI engine acts as a precision clinical watchdog.
-    4. **The Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to see customized milestones!
+    1. **Set Your Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
+    2. **Search or Scan:** Look up any product by name or barcode to view product photos and exact ingredient lists.
+    3. **Plain-Language AI Decoding:** Get clear, simple summaries of product benefits and safety cautions.
+    4. **Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to preview long-term biological milestones.
+    5. **Routine Stacking & Saving:** Check if products can be layered safely together and manage your saved routine history.
     """)
 
 st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for high accuracy by basing analysis on established dermatological standards. However, AI cannot replace a doctor.*")
@@ -495,7 +495,7 @@ tab_single, tab_stack, tab_routine = st.tabs(["🔍 Product Analysis", "🔄 Rou
 with tab_single:
     st.markdown("### 🔍 Step 2: Product Search & Barcode Input")
     
-    user_query = st.text_input("Search Product (try typing 'Arencia Retinol'):", placeholder="e.g. Arencia Retinol...")
+    user_query = st.text_input("Search Product:", placeholder="e.g. Retinol Treatment...")
 
     with st.expander("📸 Optional: Scan Barcode via Camera"):
         camera_photo = st.camera_input("Take a photo of the product barcode", label_visibility="collapsed")
@@ -639,7 +639,7 @@ with tab_stack:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        query_a = st.text_input("Product A Name:", placeholder="e.g. Arencia Retinol Treatment", key="query_a")
+        query_a = st.text_input("Product A Name:", placeholder="e.g. Retinol Treatment", key="query_a")
         match_a = multi_source_search(query_a) if query_a else []
         selected_a = None
         if match_a:
@@ -648,7 +648,7 @@ with tab_stack:
             selected_a = next(m for m in match_a if m['label'] == sel_a_name)
 
     with col_b:
-        query_b = st.text_input("Product B Name:", placeholder="e.g. Holy Hyssop Serum", key="query_b")
+        query_b = st.text_input("Product B Name:", placeholder="e.g. Renewal Cream", key="query_b")
         match_b = multi_source_search(query_b) if query_b else []
         selected_b = None
         if match_b:
