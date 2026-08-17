@@ -8,17 +8,35 @@ import difflib
 from PIL import Image, ImageDraw
 import streamlit as st
 from groq import Groq
+from openai import OpenAI
 
 # -----------------------------------------------------------------------------
 # 1. PAGE CONFIG & BACKGROUND GENERATOR (IN-MEMORY)
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad: Decode You", page_icon="🌸", layout="centered")
 
-# FIX 1: Prioritize Replit environment variables, fallback to Streamlit secrets
-GROQ_KEY = os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY", "")
-groq_client = Groq(api_key=GROQ_KEY) if GROQ_KEY else None
+# FIX 1: Prioritize environment variables, fallback to Streamlit secrets for multiple fallback keys
+GROQ_KEY = os.environ.get("GROQ_API_KEY_1") or os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY_1", "") or st.secrets.get("GROQ_API_KEY", "")
+OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY") or st.secrets.get("OPENROUTER_API_KEY", "")
 
-@st.cache_data(max_entries=1) # Cache the image generation so it only runs once per app lifecycle
+def get_ai_pipeline():
+    """Constructs an enterprise-grade multi-provider waterfall pipeline."""
+    pipeline = []
+    if GROQ_KEY:
+        pipeline.append({
+            "name": "Groq Primary",
+            "client_type": "groq",
+            "client": Groq(api_key=GROQ_KEY)
+        })
+    if OPENROUTER_KEY:
+        pipeline.append({
+            "name": "OpenRouter Gateway",
+            "client_type": "openai",
+            "client": OpenAI(base_url="https://openrouter.ai/api/v1", api_key=OPENROUTER_KEY)
+        })
+    return pipeline
+
+@st.cache_data(max_entries=1)
 def create_japanese_pastel_bg_base64(width=1920, height=1080):
     image = Image.new("RGB", (width, height))
     draw = ImageDraw.Draw(image)
@@ -78,7 +96,6 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
 
     final_background = Image.alpha_composite(image, petal_layer)
     
-    # FIX 2: Generate directly to in-memory bytes (skips disk write)
     buffered = io.BytesIO()
     final_background.convert("RGB").save(buffered, format="JPEG")
     return base64.b64encode(buffered.getvalue()).decode()
@@ -160,12 +177,10 @@ st.markdown(
 # -----------------------------------------------------------------------------
 # 3. INGREDIENT RETRIEVAL PIPELINE (WITH FUZZY SPELLING FALLBACK)
 # -----------------------------------------------------------------------------
-# FIX 3: Added max_entries to prevent container OOM crashes
 @st.cache_data(ttl=300, max_entries=50) 
 def fetch_registry_data(api_url):
     headers = {"User-Agent": "MonadDecodeYou - Research/Educational - v1.0"}
     try:
-        # FIX 4: Bumped timeout to 8 seconds and added specific exception handling
         res = requests.get(api_url, headers=headers, timeout=8)
         if res.status_code == 200:
             products = res.json().get("products", [])
@@ -217,12 +232,12 @@ def parse_ingredient_badges(ingredients_text):
     return found_replenish, found_actives, found_irritants
 
 # -----------------------------------------------------------------------------
-# 4. AI ENGINES (STRICT MEDICAL VERIFICATION)
+# 4. AI ENGINES (STRICT MEDICAL VERIFICATION WITH FALLBACK PIPELINE)
 # -----------------------------------------------------------------------------
-# FIX 3: Added max_entries to prevent container OOM crashes
 @st.cache_data(show_spinner=False, max_entries=20)
 def ai_analyze_product(product_name, ingredients, skin_profile):
-    if not groq_client:
+    pipeline = get_ai_pipeline()
+    if not pipeline:
         return None
 
     medical_flags_str = ", ".join(skin_profile.get('medical_flags', [])) if skin_profile.get('medical_flags') else "None reported"
@@ -285,25 +300,40 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         ]
     }}
     """
-    try:
-        response = groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "Output strictly valid JSON. Act as a strict medical reviewer. Do not provide unverified claims."},
-                {"role": "user", "content": prompt}
-            ],
-            model="openai/gpt-oss-120b",
-            temperature=0.1,
-            response_format={"type": "json_object"}
-        )
-        return json.loads(response.choices[0].message.content)
-    except Exception as e:
-        st.error(f"AI Generation Error: {e}")
-        return None
+    
+    for step in pipeline:
+        try:
+            if step["client_type"] == "groq":
+                response = step["client"].chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": "Output strictly valid JSON. Act as a strict medical reviewer. Do not provide unverified claims."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    model="openai/gpt-oss-120b",
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+            else:
+                response = step["client"].chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": "Output strictly valid JSON. Act as a strict medical reviewer. Do not provide unverified claims."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    model="openrouter/free",
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+            return json.loads(response.choices[0].message.content)
+        except Exception as e:
+            continue
+            
+    st.error("AI Generation Error: All fallback pipelines are currently exhausted.")
+    return None
 
-# FIX 3: Added max_entries to prevent container OOM crashes
 @st.cache_data(show_spinner=False, max_entries=20)
 def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
-    if not groq_client:
+    pipeline = get_ai_pipeline()
+    if not pipeline:
         return None
 
     medical_flags_str = ", ".join(skin_profile.get('medical_flags', [])) if skin_profile.get('medical_flags') else "None reported"
@@ -323,19 +353,33 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     2. **Medical, Medication & Barrier Disruption Risk**: Impact on their specific medical sensitivities and systemic factors.
     3. **Safe Routine Strategy**: How to split or layer them safely.
     """
-    try:
-        response = groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "You are a clinical cosmetologist providing rigorous, medically-verified safety evaluations tailored to biological profiles. Cite mechanisms of action where necessary."},
-                {"role": "user", "content": prompt}
-            ],
-            model="llama-3.3-70b-versatile",
-            temperature=0.2
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        st.error(f"Compatibility Error: {e}")
-        return None
+    
+    for step in pipeline:
+        try:
+            if step["client_type"] == "groq":
+                response = step["client"].chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": "You are a clinical cosmetologist providing rigorous, medically-verified safety evaluations tailored to biological profiles. Cite mechanisms of action where necessary."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    model="llama-3.3-70b-versatile",
+                    temperature=0.2
+                )
+            else:
+                response = step["client"].chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": "You are a clinical cosmetologist providing rigorous, medically-verified safety evaluations tailored to biological profiles. Cite mechanisms of action where necessary."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    model="openrouter/free",
+                    temperature=0.2
+                )
+            return response.choices[0].message.content
+        except Exception as e:
+            continue
+            
+    st.error("Compatibility Error: All fallback pipelines are currently exhausted.")
+    return None
 
 # -----------------------------------------------------------------------------
 # 5. MAIN INTERFACE LAYOUT
@@ -354,8 +398,8 @@ with st.expander("💡 What is Monad? (How it works & Data Reliability)", expand
 
 st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for a 90%+ confidence interval by instructing its AI engine to strictly base analysis on peer-reviewed clinical data (e.g., PubMed, CIR Safety Assessments). However, AI cannot replace a doctor. Always patch test and consult a certified dermatologist for active clinical treatment or severe reactions.*")
 
-if not GROQ_KEY:
-    st.warning("⚠️ Groq API Key not detected in Streamlit Secrets or Environment Variables. AI dynamic features are disabled.")
+if not GROQ_KEY and not OPENROUTER_KEY:
+    st.warning("⚠️ No API keys detected in Streamlit Secrets or Environment Variables. AI dynamic features are disabled.")
 
 # Global Biological & Medical Profile Configuration
 with st.expander("👤 Step 1: Customize Your Biological & Medical Profile", expanded=True):
@@ -442,7 +486,7 @@ with tab_single:
 
             st.markdown("---")
 
-            if GROQ_KEY:
+            if GROQ_KEY or OPENROUTER_KEY:
                 with st.spinner("✨ Monad decoding formula against verified medical databases..."):
                     ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'], user_profile)
                     
