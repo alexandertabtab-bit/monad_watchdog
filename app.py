@@ -291,7 +291,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
                 {"role": "system", "content": "Output strictly valid JSON. Act as a strict medical reviewer. Do not provide unverified claims."},
                 {"role": "user", "content": prompt}
             ],
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             temperature=0.1,
             response_format={"type": "json_object"}
         )
