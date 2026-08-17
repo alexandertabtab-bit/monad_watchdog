@@ -295,57 +295,60 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
-    You are Monad, a friendly, expert cosmetic formulation guide. 
-    CRITICAL RULE: Write your entire response in clear, plain, everyday language that is super easy to read and understand. Avoid complex medical or scientific jargon. Explain things as if talking warmly to a friend.
+    You are Monad, a friendly guide analyzing skincare.
+    CRITICAL INSTRUCTIONS:
+    1. STRICTLY NO INGREDIENT NAMES in the 'pros', 'cons', or 'headline'. Do not say things like "contains niacinamide" or "has salicylic acid." 
+    2. Speak purely about RESULTS and VIBES in plain English (e.g. "Gives you a massive glow up," "Will dry out your skin if you use it too much," "Not safe for your baby").
+    3. The 'analysis' section can be a bit more detailed, explaining *why* this product fits their life stage and skin type, but keep it practical and relatable. Focus on HOW to use it and what to expect.
     
-    Adapt all analysis to the user's complete biological profile:
-    - Biological Sex / Baseline: {skin_profile.get('sex')}
-    - Life Stage / Hormonal Status: {skin_profile.get('lifestage')}
+    User Profile:
+    - Biological Sex: {skin_profile.get('sex')}
+    - Life Stage: {skin_profile.get('lifestage')}
     - Skin Type: {skin_profile.get('type')}
     - Barrier State: {skin_profile.get('barrier')}
-    - Active Medical Conditions & Sensitivities: {medical_flags_str}
-    - Current Systemic / Topical Medications: {medications_str}
+    - Active Medical Conditions: {medical_flags_str}
+    - Current Medications: {medications_str}
 
     Product: {product_name}
     Ingredients: {ingredients}
 
     Return a JSON object with this exact structure (do not include markdown outside JSON):
     {{
-        "headline": "A short, catchy, 1-sentence summary of how good this product is for their skin.",
-        "analysis": "A simple 2-sentence summary explaining how this formula works for them in everyday words.",
+        "headline": "A punchy, 1-sentence hook about the main vibe/result. NO INGREDIENT NAMES.",
+        "analysis": "A personalized deep-dive. Explain how this fits their specific skin type and life stage, and drop some real-world advice on how to use it without sounding like a chemistry textbook.",
         "usage_protocol": {{
-            "frequency": "How often to use it in plain terms.",
-            "time_of_day": "AM or PM.",
-            "application_step": "Where it fits in a simple routine.",
-            "time_to_visible_results": "When they can expect to see changes in plain terms."
+            "frequency": "How often to use it (e.g., 'Start just 2 nights a week').",
+            "time_of_day": "Morning, Night, or Both.",
+            "application_step": "Exactly when to apply it (e.g., 'Right after washing, before your moisturizer').",
+            "time_to_visible_results": "When they'll actually notice a difference."
         }},
         "pros": [
-            {{"title": "Simple benefit title 1", "detail": "A clear, plain-language explanation of why this helps."}},
-            {{"title": "Simple benefit title 2", "detail": "A clear, plain-language explanation of why this benefits their skin type."}}
+            {{"title": "Relatable Benefit 1", "detail": "A real-world result (e.g., 'Clears up those annoying bumps'). NO INGREDIENT NAMES."}},
+            {{"title": "Relatable Benefit 2", "detail": "Another great result for their skin type. NO INGREDIENT NAMES."}}
         ],
         "cons": [
-            {{"title": "Simple caution title 1", "detail": "A plain-language warning of what to watch out for."}},
-            {{"title": "Simple caution title 2", "detail": "A secondary simple caution based on their medical profile."}}
+            {{"title": "Relatable Caution 1", "detail": "A real-world warning (e.g., 'Might make you peel like crazy at first'). NO INGREDIENT NAMES."}},
+            {{"title": "Relatable Caution 2", "detail": "Safety check based on their life stage/medical profile. NO INGREDIENT NAMES."}}
         ],
         "spectrum": {{
-            "Day 1": "What happens right away on the first day in simple words.",
-            "Day 3": "How the skin feels after a couple of days.",
-            "Day 7": "How things look after the first week.",
-            "Day 14": "Changes at the two-week mark.",
-            "Month 1": "Results after a full 4-week skin cycle.",
-            "Month 2": "Changes after two months.",
-            "Month 3": "Longer-term results.",
-            "Month 6": "Half-year skin improvements.",
-            "Year 1": "One-year maintenance check.",
-            "Year 2": "Multi-year impact.",
-            "Year 5": "Long-term skin health.",
-            "Year 10": "Decade-level skin preservation.",
-            "Year 20": "Long-term elasticity impact.",
-            "Year 50": "Long-term outlook.",
-            "Year 100": "Lifetime outlook."
+            "Day 1": "What happens right away.",
+            "Day 3": "How it feels after a few days.",
+            "Day 7": "End of week 1.",
+            "Day 14": "Two-week mark.",
+            "Month 1": "One month results.",
+            "Month 2": "Two month results.",
+            "Month 3": "Three month results.",
+            "Month 6": "Half-year mark.",
+            "Year 1": "One year.",
+            "Year 2": "Two years.",
+            "Year 5": "Five years.",
+            "Year 10": "Ten years.",
+            "Year 20": "Twenty years.",
+            "Year 50": "Fifty years.",
+            "Year 100": "Lifetime."
         }},
         "medical_sources": [
-            "Mention 2-3 general safety guidelines or skincare standards simply."
+            "Mention 2-3 general safety rules simply."
         ]
     }}
     """
@@ -355,7 +358,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Output strictly valid JSON. Use plain, easy-to-understand everyday language without heavy medical jargon."},
+                        {"role": "system", "content": "Output strictly valid JSON. Never use chemical ingredient names in the pros/cons. Speak like a normal, helpful human."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openai/gpt-oss-120b",
@@ -365,7 +368,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Output strictly valid JSON. Use plain, easy-to-understand everyday language without heavy medical jargon."},
+                        {"role": "system", "content": "Output strictly valid JSON. Never use chemical ingredient names in the pros/cons. Speak like a normal, helpful human."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
@@ -387,7 +390,11 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
-    Analyze the simultaneous use of these two products for a user with baseline [{skin_profile.get('sex')}, {skin_profile.get('lifestage')}], {skin_profile.get('type')} skin, a {skin_profile.get('barrier')} barrier, medical conditions [{medical_flags_str}], and medications [{medications_str}]:
+    Analyze layering these two products for a user with:
+    Life Stage: {skin_profile.get('lifestage')}
+    Skin Type: {skin_profile.get('type')}
+    Barrier: {skin_profile.get('barrier')}
+    Medical/Sensitivities: {medical_flags_str}
 
     Product A: {prod_a_name}
     Ingredients A: {prod_a_ing}
@@ -395,7 +402,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     Product B: {prod_b_name}
     Ingredients B: {prod_b_ing}
 
-    Provide a concise, easy-to-understand evaluation in plain language covering ingredient clashes, safety risks, and safe routine strategy.
+    RULE: Speak like a normal human. Do not list chemical names. Just tell them if mixing these will cause a bad reaction (like burning, peeling) or if it's safe and gives a great glow. Give practical advice on which one goes on first.
     """
     
     for step in pipeline:
@@ -403,7 +410,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations."},
+                        {"role": "system", "content": "You are a friendly guide providing practical, jargon-free layering advice."},
                         {"role": "user", "content": prompt}
                     ],
                     model="llama-3.3-70b-versatile",
@@ -412,7 +419,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations."},
+                        {"role": "system", "content": "You are a friendly guide providing practical, jargon-free layering advice."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
@@ -429,9 +436,8 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
 st.title("🌸 MONAD: Decode You")
 st.caption("✨ Advanced molecular intelligence engine tailored to your complete biological profile.")
 
-with st.expander("💡 What is Monad? (How it works & Data Reliability)", expanded=False):
+with st.expander("💡 Welcome to Monad: Decode You! Here is how the concept works:", expanded=False):
     st.markdown("""
-    Welcome to **Monad: Decode You**! Here is how the concept works:
     1. **Set Your Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
     2. **Search or Scan:** Look up any product by name or barcode to view product photos and exact ingredient lists.
     3. **Plain-Language AI Decoding:** Get clear, simple summaries of product benefits and safety cautions.
