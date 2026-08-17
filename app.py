@@ -295,57 +295,46 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
-    You are Monad, a friendly guide analyzing skincare.
-    CRITICAL INSTRUCTIONS:
-    1. STRICTLY NO INGREDIENT NAMES in the 'pros', 'cons', or 'headline'. Do not say things like "contains niacinamide" or "has salicylic acid." 
-    2. Speak purely about RESULTS and VIBES in plain English (e.g. "Gives you a massive glow up," "Will dry out your skin if you use it too much," "Not safe for your baby").
-    3. The 'analysis' section can be a bit more detailed, explaining *why* this product fits their life stage and skin type, but keep it practical and relatable. Focus on HOW to use it and what to expect.
-    
-    User Profile:
-    - Biological Sex: {skin_profile.get('sex')}
+    You are a normal, everyday person giving skincare advice. Speak casually and directly, like you are explaining a product to a friend.
+
+    CRITICAL RULES:
+    1. NO INGREDIENT NAMES. NEVER use words like Niacinamide, Salicylic Acid, Retinol, etc. Talk purely about the REAL-WORLD RESULTS (e.g., "clears breakouts", "plumps the skin", "gives a glow").
+    2. THE "NO ECHO" RULE: You are strictly forbidden from stating the user's profile back to them. NEVER use phrases like "Since you have oily skin...", "Because your barrier is compromised...", or "As a pregnant woman...". Treat their profile as invisible context to shape the advice, but DO NOT mention it.
+    3. THE DEEP DIVE: The 'analysis' section must focus entirely on HOW and WHEN to use the product. Give practical, step-by-step instructions. Jump straight into the action.
+    4. THE WASHOUT PERIOD: In the 'usage_protocol', calculate the 'effect_fade_timeline'. Figure out internally if this product works on the surface (effects fade in 1-2 days), mid-level (1-2 weeks), or deep cellular level (4-6 weeks), and translate that into a plain English sentence explaining what happens if they stop using it.
+
+    Profile Context (Use this to invisibly guide your advice, but DO NOT talk about it):
     - Life Stage: {skin_profile.get('lifestage')}
     - Skin Type: {skin_profile.get('type')}
     - Barrier State: {skin_profile.get('barrier')}
     - Active Medical Conditions: {medical_flags_str}
-    - Current Medications: {medications_str}
 
     Product: {product_name}
     Ingredients: {ingredients}
 
-    Return a JSON object with this exact structure (do not include markdown outside JSON):
+    Return a JSON object with this exact structure:
     {{
         "headline": "A punchy, 1-sentence hook about the main vibe/result. NO INGREDIENT NAMES.",
-        "analysis": "A personalized deep-dive. Explain how this fits their specific skin type and life stage, and drop some real-world advice on how to use it without sounding like a chemistry textbook.",
+        "analysis": "Practical, step-by-step advice on exactly how and when to use the product. Speak like a normal person. NEVER start with or include phrases like 'You have oily skin' or 'Because you are...'. Just give the usage instructions.",
         "usage_protocol": {{
             "frequency": "How often to use it (e.g., 'Start just 2 nights a week').",
             "time_of_day": "Morning, Night, or Both.",
-            "application_step": "Exactly when to apply it (e.g., 'Right after washing, before your moisturizer').",
-            "time_to_visible_results": "When they'll actually notice a difference."
+            "application_step": "Exactly when to apply it (e.g., 'Right after washing').",
+            "time_to_visible_results": "When they'll actually notice a difference.",
+            "effect_fade_timeline": "Plain English explanation of how fast the skin reverts if they stop using this product."
         }},
         "pros": [
-            {{"title": "Relatable Benefit 1", "detail": "A real-world result (e.g., 'Clears up those annoying bumps'). NO INGREDIENT NAMES."}},
-            {{"title": "Relatable Benefit 2", "detail": "Another great result for their skin type. NO INGREDIENT NAMES."}}
+            {{"title": "Relatable Benefit 1", "detail": "A real-world result. NO INGREDIENT NAMES."}},
+            {{"title": "Relatable Benefit 2", "detail": "Another great result. NO INGREDIENT NAMES."}}
         ],
         "cons": [
-            {{"title": "Relatable Caution 1", "detail": "A real-world warning (e.g., 'Might make you peel like crazy at first'). NO INGREDIENT NAMES."}},
-            {{"title": "Relatable Caution 2", "detail": "Safety check based on their life stage/medical profile. NO INGREDIENT NAMES."}}
+            {{"title": "Relatable Caution 1", "detail": "A real-world warning. NO INGREDIENT NAMES."}},
+            {{"title": "Relatable Caution 2", "detail": "Safety check based on their profile. NO INGREDIENT NAMES."}}
         ],
         "spectrum": {{
             "Day 1": "What happens right away.",
             "Day 3": "How it feels after a few days.",
-            "Day 7": "End of week 1.",
-            "Day 14": "Two-week mark.",
-            "Month 1": "One month results.",
-            "Month 2": "Two month results.",
-            "Month 3": "Three month results.",
-            "Month 6": "Half-year mark.",
-            "Year 1": "One year.",
-            "Year 2": "Two years.",
-            "Year 5": "Five years.",
-            "Year 10": "Ten years.",
-            "Year 20": "Twenty years.",
-            "Year 50": "Fifty years.",
-            "Year 100": "Lifetime."
+            "Day 7": "End of week 1."
         }},
         "medical_sources": [
             "Mention 2-3 general safety rules simply."
@@ -355,24 +344,26 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     
     for step in pipeline:
         try:
+            system_instruction = "You are a relatable, everyday human giving skincare advice. You output strictly valid JSON. You never use chemical ingredient names. You never repeat the user's skin type or profile back to them."
+            
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Output strictly valid JSON. Never use chemical ingredient names in the pros/cons. Speak like a normal, helpful human."},
+                        {"role": "system", "content": system_instruction},
                         {"role": "user", "content": prompt}
                     ],
-                    model="openai/gpt-oss-120b",
-                    temperature=0.1,
+                    model="llama-3.3-70b-versatile",
+                    temperature=0.2, 
                     response_format={"type": "json_object"}
                 )
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Output strictly valid JSON. Never use chemical ingredient names in the pros/cons. Speak like a normal, helpful human."},
+                        {"role": "system", "content": system_instruction},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
-                    temperature=0.1,
+                    temperature=0.2,
                     response_format={"type": "json_object"}
                 )
             return json.loads(response.choices[0].message.content)
@@ -390,11 +381,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
-    Analyze layering these two products for a user with:
-    Life Stage: {skin_profile.get('lifestage')}
-    Skin Type: {skin_profile.get('type')}
-    Barrier: {skin_profile.get('barrier')}
-    Medical/Sensitivities: {medical_flags_str}
+    Analyze layering these two products. NEVER repeat their skin profile back to them (No 'Since you have oily skin...').
 
     Product A: {prod_a_name}
     Ingredients A: {prod_a_ing}
@@ -407,10 +394,12 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     
     for step in pipeline:
         try:
+            system_instruction = "You are a friendly guide providing practical, jargon-free layering advice. You never repeat the user's profile back to them."
+            
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a friendly guide providing practical, jargon-free layering advice."},
+                        {"role": "system", "content": system_instruction},
                         {"role": "user", "content": prompt}
                     ],
                     model="llama-3.3-70b-versatile",
@@ -419,7 +408,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a friendly guide providing practical, jargon-free layering advice."},
+                        {"role": "system", "content": system_instruction},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
@@ -628,6 +617,9 @@ with tab_single:
                             with p_col2:
                                 st.markdown(f"**Routine Order:** {protocol.get('application_step', 'N/A')}")
                                 st.markdown(f"**Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
+                            
+                            st.markdown("---")
+                            st.markdown(f"**⏳ If you stop using it:** {protocol.get('effect_fade_timeline', 'N/A')}")
 
                     st.markdown("---")
                     with st.expander("🏷️ Extracted INCI Ingredient Formula", expanded=False):
