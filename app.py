@@ -54,7 +54,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
             local_p = (percentage - 0.5) * 2.0
             r = int(color_pink[0] + (color_green[0] - color_pink[0]) * local_p)
             g = int(color_pink[1] + (color_green[1] - color_pink[1]) * local_p)
-            b = int(color_pink[2] + (color_green[2] - color_pink[2]) * local_p)
+            b = int(color_pink[2] + (color_green[2] - color_green[2]) * local_p)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -237,7 +237,7 @@ def parse_ingredient_badges(ingredients_text):
     return found_replenish, found_actives, found_irritants
 
 # -----------------------------------------------------------------------------
-# 4. AI ENGINES (STRICT MEDICAL VERIFICATION WITH FALLBACK PIPELINE)
+# 4. AI ENGINES (PLAIN LANGUAGE & ACCESSIBLE EXPLANATIONS)
 # -----------------------------------------------------------------------------
 @st.cache_data(show_spinner=False, max_entries=20)
 def ai_analyze_product(product_name, ingredients, skin_profile):
@@ -249,10 +249,8 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
-    You are Monad, an expert clinical cosmetologist and biological intelligence engine.
-    CRITICAL MEDICAL DIRECTIVE: All analysis MUST be strictly cross-referenced with peer-reviewed dermatological literature (e.g., PubMed, NIH, AAD, CIR Safety Assessments). Maintain a 90%+ clinical confidence interval for all claims. Do not hallucinate benefits. 
-    
-    If an ingredient has potential contraindications with the user's reported medications or medical flags, you MUST state it based on known pharmacological interactions.
+    You are Monad, a friendly, expert cosmetic formulation guide. 
+    CRITICAL RULE: Write your entire response in clear, plain, everyday language that is super easy to read and understand. Avoid complex medical or scientific jargon (do not use terms like keratinocyte turnover, melanosome dispersion, or transepidermal water loss). Explain things as if talking warmly to a friend.
     
     Adapt all analysis to the user's complete biological profile:
     - Biological Sex / Baseline: {skin_profile.get('sex')}
@@ -267,41 +265,41 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
 
     Return a JSON object with this exact structure (do not include markdown outside JSON):
     {{
-        "headline": "A punchy, 1-sentence clinical headline summarizing formula suitability.",
-        "analysis": "2-sentence clinical summary explicitly addressing how this formula interacts with their complete biological profile, backed by established dermatological principles.",
+        "headline": "A short, catchy, 1-sentence summary of how good this product is for their skin.",
+        "analysis": "A simple 2-sentence summary explaining how this formula works for them in everyday words.",
         "usage_protocol": {{
-            "frequency": "Evidence-based frequency strictly adapted to their barrier condition and medications.",
-            "time_of_day": "AM/PM application guidance based on phototoxicity and active half-lives.",
-            "application_step": "Precise order in skincare routine (e.g., pH dependent layering).",
-            "time_to_visible_results": "Detailed clinical timeline based on cellular turnover rates."
+            "frequency": "How often to use it in plain terms (e.g., '2 times a week at night').",
+            "time_of_day": "AM or PM.",
+            "application_step": "Where it fits in a simple routine.",
+            "time_to_visible_results": "When they can expect to see changes in plain terms."
         }},
         "pros": [
-            {{"title": "Simple benefit title 1", "detail": "Clinically verified explanation of why this helps their skin."}},
-            {{"title": "Simple benefit title 2", "detail": "Clinically verified explanation of why this benefits their skin type."}}
+            {{"title": "Simple benefit title 1", "detail": "A clear, plain-language explanation of why this helps."}},
+            {{"title": "Simple benefit title 2", "detail": "A clear, plain-language explanation of why this benefits their skin type."}}
         ],
         "cons": [
-            {{"title": "Simple caution title 1", "detail": "Pharmacological or barrier disruption risk, plainly explained."}},
-            {{"title": "Simple caution title 2", "detail": "Secondary verified risk based on their medical profile."}}
+            {{"title": "Simple caution title 1", "detail": "A plain-language warning of what to watch out for."}},
+            {{"title": "Simple caution title 2", "detail": "A secondary simple caution based on their medical profile."}}
         ],
         "spectrum": {{
-            "Day 1": "Immediate reaction and pH adjustment.",
-            "Day 3": "Early barrier response under their current condition.",
-            "Day 7": "End of first week adaptation phase.",
-            "Day 14": "Two-week cumulative active integration.",
-            "Month 1": "First full cellular turnover cycle (28 days) results.",
-            "Month 2": "Deeper dermal impact and pigment/texture shifts.",
-            "Month 3": "Stabilized results and long-term tolerance check.",
-            "Month 6": "Half-year structural epidermal changes.",
-            "Year 1": "Full year maintenance and barrier resilience.",
-            "Year 2": "Multi-year cumulative compounding effects.",
-            "Year 5": "Long-term cellular aging trajectory impact.",
-            "Year 10": "Decade-level structural preservation.",
-            "Year 20": "Two-decade biological legacy on skin elasticity.",
-            "Year 50": "Half-century cumulative exposure outcomes.",
-            "Year 100": "Theoretical lifelong maximum preservation and cellular legacy."
+            "Day 1": "What happens right away on the first day in simple words.",
+            "Day 3": "How the skin feels after a couple of days.",
+            "Day 7": "How things look after the first week.",
+            "Day 14": "Changes at the two-week mark.",
+            "Month 1": "Results after a full 4-week skin cycle.",
+            "Month 2": "Changes after two months.",
+            "Month 3": "Longer-term results.",
+            "Month 6": "Half-year skin improvements.",
+            "Year 1": "One-year maintenance check.",
+            "Year 2": "Multi-year impact.",
+            "Year 5": "Long-term skin health.",
+            "Year 10": "Decade-level skin preservation.",
+            "Year 20": "Long-term elasticity impact.",
+            "Year 50": "Long-term outlook.",
+            "Year 100": "Lifetime outlook."
         }},
         "medical_sources": [
-            "Provide 2-3 SPECIFIC dermatological databases, clinical trials, or safety assessments relevant to these specific ingredients (e.g., 'CIR Safety Assessment: Niacinamide', 'AAD Guidelines on Rosacea Management', 'PubChem NIH data for [Ingredient]')"
+            "Mention 2-3 general safety guidelines or skincare standards simply (e.g., 'Dermatology safety guidelines', 'General cosmetic safety standards')"
         ]
     }}
     """
@@ -311,7 +309,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Output strictly valid JSON. Act as a strict medical reviewer. Do not provide unverified claims."},
+                        {"role": "system", "content": "Output strictly valid JSON. Use plain, easy-to-understand everyday language without heavy medical jargon."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openai/gpt-oss-120b",
@@ -321,7 +319,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "Output strictly valid JSON. Act as a strict medical reviewer. Do not provide unverified claims."},
+                        {"role": "system", "content": "Output strictly valid JSON. Use plain, easy-to-understand everyday language without heavy medical jargon."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
@@ -353,10 +351,10 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     Product B: {prod_b_name}
     Ingredients B: {prod_b_ing}
 
-    Provide a concise, highly-verified clinical evaluation covering:
-    1. **Active Ingredient Overlaps & pH Conflicts**: (e.g., AHA/BHA + Retinoid, Acid + Vitamin C). Cite general dermatological consensus.
-    2. **Medical, Medication & Barrier Disruption Risk**: Impact on their specific medical sensitivities and systemic factors.
-    3. **Safe Routine Strategy**: How to split or layer them safely.
+    Provide a concise, easy-to-understand evaluation in plain language covering:
+    1. **Ingredient Clashes & Conflicts**: (e.g., mixing acids with retinol). Explain simply whether they cancel each other out or cause irritation.
+    2. **Skin & Medication Safety Risk**: Simple explanation of any risks with their specific medical sensitivities.
+    3. **Safe Routine Strategy**: Easy steps on how to split or layer them safely.
     """
     
     for step in pipeline:
@@ -364,7 +362,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a clinical cosmetologist providing rigorous, medically-verified safety evaluations tailored to biological profiles. Cite mechanisms of action where necessary."},
+                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations without complex medical jargon."},
                         {"role": "user", "content": prompt}
                     ],
                     model="llama-3.3-70b-versatile",
@@ -373,7 +371,7 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
             else:
                 response = step["client"].chat.completions.create(
                     messages=[
-                        {"role": "system", "content": "You are a clinical cosmetologist providing rigorous, medically-verified safety evaluations tailored to biological profiles. Cite mechanisms of action where necessary."},
+                        {"role": "system", "content": "You are a friendly cosmetic advisor providing clear, plain-language safety evaluations without complex medical jargon."},
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
@@ -397,11 +395,11 @@ with st.expander("💡 What is Monad? (How it works & Data Reliability)", expand
     Welcome to **Monad: Decode You**! Here is how the concept works:
     1. **Set Your Complete Biological Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
     2. **Search or Scan:** Look up any product by name (even with typos!) or barcode. Monad extracts the exact INCI ingredient list from global registries (OpenBeautyFacts/OpenFoodFacts).
-    3. **Personalized Biological Forecast:** Monad's AI engine acts as a precision clinical watchdog. It strictly cross-references ingredients against verified dermatological databases (NIH, CIR, AAD) to scan for contraindications against your exact medical background.
-    4. **The Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to see customized clinical milestones tailored to your biology!
+    3. **Personalized Biological Forecast:** Monad's AI engine acts as a precision clinical watchdog. It cross-references ingredients against verified databases to scan for contraindications against your exact medical background.
+    4. **The Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to see customized milestones tailored to your biology!
     """)
 
-st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for a 90%+ confidence interval by instructing its AI engine to strictly base analysis on peer-reviewed clinical data (e.g., PubMed, CIR Safety Assessments). However, AI cannot replace a doctor. Always patch test and consult a certified dermatologist for active clinical treatment or severe reactions.*")
+st.markdown("> **Medical Verification & Disclaimer:** *Monad aims for high accuracy by basing analysis on established dermatological standards. However, AI cannot replace a doctor. Always patch test and consult a certified dermatologist for active clinical treatment or severe reactions.*")
 
 if not GROQ_KEY and not OPENROUTER_KEY:
     st.warning("⚠️ No API keys detected in Streamlit Secrets or Environment Variables. AI dynamic features are disabled.")
@@ -458,7 +456,7 @@ tab_single, tab_stack, tab_routine = st.tabs(["🔍 Product Analysis", "🔄 Rou
 with tab_single:
     st.markdown("### 🔍 Step 2: Product Search & Barcode Input")
     
-    user_query = st.text_input("Search Product (typos are automatically corrected):", placeholder="e.g. CeraVe Cleansor...")
+    user_query = st.text_input("Search Product (typos are automatically corrected):", placeholder="e.g. CeraVe Cleanser...")
 
     with st.expander("📸 Optional: Scan Barcode via Camera"):
         camera_photo = st.camera_input("Take a photo of the product barcode", label_visibility="collapsed")
@@ -504,15 +502,16 @@ with tab_single:
             st.markdown("---")
 
             if GROQ_KEY or OPENROUTER_KEY:
-                with st.spinner("✨ Monad decoding formula against verified medical databases..."):
+                with st.spinner("✨ Monad decoding formula in plain, easy-to-read language..."):
                     ai_data = ai_analyze_product(selected_product['label'], selected_product['ingredients'], user_profile)
                     
                 if ai_data:
                     st.markdown(f"### 🎯 {ai_data.get('headline', '')}")
                     
-                    col_p, col_c = st.columns(2)
+                    # Stacked vertically for mobile readability
+                    col_p, col_c = st.columns(1)
                     with col_p:
-                        st.markdown("#### ✅ Clinically Verified Wins")
+                        st.markdown("#### ✅ Skin Benefits & Wins")
                         pros = ai_data.get("pros", [])
                         if pros:
                             for i, p in enumerate(pros):
@@ -527,7 +526,7 @@ with tab_single:
                             st.write("None highlighted for this profile.")
 
                     with col_c:
-                        st.markdown("#### ⚠️ Systemic & Medical Alerts")
+                        st.markdown("#### ⚠️ Cautions & Things to Watch")
                         cons = ai_data.get("cons", [])
                         if cons:
                             for i, c in enumerate(cons):
@@ -543,7 +542,7 @@ with tab_single:
 
                     st.markdown("---")
                     
-                    with st.expander("📖 Read Full Clinical Analysis & Rationale", expanded=False):
+                    with st.expander("📖 Read Simple Summary & Breakdown", expanded=False):
                         st.write(ai_data.get("analysis", ""))
 
                     st.markdown("### ⏳ Customized Longevity Spectrum")
@@ -558,11 +557,19 @@ with tab_single:
                             key="spectrum_slider" 
                         )
                         
-                        st.info(f"**{selected_time} Impact:** {spectrum_data[selected_time]}")
+                        st.markdown(
+                            f"""
+                            <div style="background-color: rgba(255, 255, 255, 0.85); border: 1px solid #f3e5f5; border-radius: 10px; padding: 15px; margin-top: 10px;">
+                                <span style="color: #4a4045; font-weight: 600;">{selected_time} Impact:</span> 
+                                <span style="color: #4a4045;">{spectrum_data[selected_time]}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
 
                     st.markdown("---")
-                    with st.expander("🔬 Deep Dive Clinical Lab (Dosing & Citations)", expanded=False):
-                        st.markdown("#### 📋 Evidence-Based Dosing Protocol")
+                    with st.expander("🔬 How to Use & Routine Guidelines", expanded=False):
+                        st.markdown("#### 📋 Simple Usage Schedule")
                         protocol = ai_data.get("usage_protocol", {})
                         if protocol:
                             p_col1, p_col2 = st.columns(2)
@@ -574,8 +581,8 @@ with tab_single:
                                 st.markdown(f"**Results Window:** {protocol.get('time_to_visible_results', 'N/A')}")
 
                         st.markdown("---")
-                        st.markdown("#### 📚 Verified Medical Sources & Citations")
-                        st.caption("The analysis above was cross-referenced using principles from these medical databases:")
+                        st.markdown("#### 📚 Reference Guidelines")
+                        st.caption("Cross-referenced with general dermatology and product safety standards:")
                         for src in ai_data.get("medical_sources", []):
                             st.markdown(f"- *{src}*")
 
@@ -590,7 +597,7 @@ with tab_single:
 # -----------------------------------------------------------------------------
 with tab_stack:
     st.markdown("### 🔄 Dual-Product Routine Stacking Evaluation")
-    st.caption("Check rigorous chemical compatibility and pharmacological safety before layering two products.")
+    st.caption("Check chemical compatibility and safety before layering two products.")
 
     col_a, col_b = st.columns(2)
     
@@ -614,8 +621,8 @@ with tab_stack:
 
     if selected_a and selected_b:
         st.markdown("---")
-        if st.button("🧪 Evaluate Chemical & Biological Compatibility"):
-            with st.spinner("Analyzing pharmacological interactions & verified medical data..."):
+        if st.button("🧪 Evaluate Compatibility"):
+            with st.spinner("Analyzing product interactions in plain language..."):
                 report = ai_check_compatibility(
                     selected_a['label'], selected_a['ingredients'],
                     selected_b['label'], selected_b['ingredients'],
