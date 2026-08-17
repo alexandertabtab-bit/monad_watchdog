@@ -15,12 +15,10 @@ from openai import OpenAI
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="Monad: Decode You", page_icon="🌸", layout="centered")
 
-# FIX 1: Prioritize environment variables, fallback to Streamlit secrets for multiple fallback keys
 GROQ_KEY = os.environ.get("GROQ_API_KEY_1") or os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY_1", "") or st.secrets.get("GROQ_API_KEY", "")
 OPENROUTER_KEY = os.environ.get("OPENROUTER_API_KEY") or st.secrets.get("OPENROUTER_API_KEY", "")
 
 def get_ai_pipeline():
-    """Constructs an enterprise-grade multi-provider waterfall pipeline."""
     pipeline = []
     if GROQ_KEY:
         pipeline.append({
@@ -103,7 +101,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
 img_base64 = create_japanese_pastel_bg_base64()
 
 # -----------------------------------------------------------------------------
-# 2. CUSTOM CSS STYLING
+# 2. CUSTOM CSS STYLING (WITH MOBILE PULL-TO-REFRESH FIX)
 # -----------------------------------------------------------------------------
 if img_base64:
     bg_style = f"""
@@ -129,8 +127,9 @@ st.markdown(
     <style>
     {bg_style}
     
-    html, body {{
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stVerticalBlock"] {{
         overscroll-behavior-y: none !important;
+        -webkit-overflow-scrolling: touch;
     }}
 
     h1, h2, h3, h4, h5, h6 {{
@@ -173,6 +172,10 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+# Initialize Session State for Saved Routine History
+if "saved_routine" not in st.session_state:
+    st.session_state["saved_routine"] = []
 
 # -----------------------------------------------------------------------------
 # 3. INGREDIENT RETRIEVAL PIPELINE (WITH FUZZY SPELLING FALLBACK)
@@ -445,7 +448,7 @@ user_profile = {
     "medical_flags": medical_flags
 }
 
-tab_single, tab_stack = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking Compatibility"])
+tab_single, tab_stack, tab_routine = st.tabs(["🔍 Product Analysis", "🔄 Routine Stacking", "📚 My Routine"])
 
 # -----------------------------------------------------------------------------
 # TAB 1: PRODUCT ANALYSIS
@@ -472,6 +475,18 @@ with tab_single:
             st.markdown("---")
             st.success(f"**Loaded:** {selected_product['label']}")
 
+            # Save to Routine Button
+            if st.button("📌 Save to My Routine"):
+                product_entry = {
+                    "label": selected_product['label'],
+                    "ingredients": selected_product['ingredients']
+                }
+                if product_entry not in st.session_state["saved_routine"]:
+                    st.session_state["saved_routine"].append(product_entry)
+                    st.success("Successfully added to your routine history!")
+                else:
+                    st.info("Product is already saved in your routine.")
+
             f_rep, f_act, f_irr = parse_ingredient_badges(selected_product['ingredients'])
             badge_cols = st.columns(3)
             with badge_cols[0]:
@@ -493,7 +508,6 @@ with tab_single:
                 if ai_data:
                     st.markdown(f"### 🎯 {ai_data.get('headline', '')}")
                     
-                    # INTERACTIVE CLICKABLE PROS & CONS (USING EXPANDER CARDS)
                     col_p, col_c = st.columns(2)
                     with col_p:
                         st.markdown("#### ✅ Clinically Verified Wins")
@@ -527,7 +541,6 @@ with tab_single:
 
                     st.markdown("---")
                     
-                    # Expandable Deep-Dive Clinical Summary
                     with st.expander("📖 Read Full Clinical Analysis & Rationale", expanded=False):
                         st.write(ai_data.get("analysis", ""))
 
@@ -608,3 +621,26 @@ with tab_stack:
                 )
                 if report:
                     st.markdown(report)
+
+# -----------------------------------------------------------------------------
+# TAB 3: SAVED ROUTINE HISTORY
+# -----------------------------------------------------------------------------
+with tab_routine:
+    st.markdown("### 📚 Your Saved Routine & History")
+    st.caption("Access all your bookmarked products in one place without needing to re-search.")
+
+    if not st.session_state["saved_routine"]:
+        st.info("No products saved yet. Search for a product in the 'Product Analysis' tab and click **'Save to My Routine'**!")
+    else:
+        for idx, item in enumerate(st.session_state["saved_routine"]):
+            with st.expander(f"🧴 {item['label']}"):
+                st.markdown(f"**Ingredients:**")
+                st.caption(item['ingredients'])
+                if st.button("🗑️ Remove from Routine", key=f"remove_{idx}"):
+                    st.session_state["saved_routine"].pop(idx)
+                    st.rerun()
+
+        st.markdown("---")
+        if st.button("🧹 Clear All Saved Routine History"):
+            st.session_state["saved_routine"] = []
+            st.rerun()
