@@ -54,7 +54,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
             local_p = (percentage - 0.5) * 2.0
             r = int(color_pink[0] + (color_green[0] - color_pink[0]) * local_p)
             g = int(color_pink[1] + (color_green[1] - color_pink[1]) * local_p)
-            b = int(color_pink[2] + (color_green[2] - color_green[2]) * local_p)
+            b = int(color_pink[2] + (color_green[2] - color_pink[2]) * local_p)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -508,37 +508,34 @@ with tab_single:
                 if ai_data:
                     st.markdown(f"### 🎯 {ai_data.get('headline', '')}")
                     
-                    # Stacked vertically for mobile readability
-                    col_p, col_c = st.columns(1)
-                    with col_p:
-                        st.markdown("#### ✅ Skin Benefits & Wins")
-                        pros = ai_data.get("pros", [])
-                        if pros:
-                            for i, p in enumerate(pros):
-                                if isinstance(p, dict):
-                                    title = p.get("title", f"Benefit {i+1}")
-                                    detail = p.get("detail", "")
-                                    with st.expander(f"✨ {title}"):
-                                        st.write(detail)
-                                else:
-                                    st.info(f"✨ {p}")
-                        else:
-                            st.write("None highlighted for this profile.")
+                    # Stacked sequentially to prevent squishing and avoid column unpacking bugs
+                    st.markdown("#### ✅ Skin Benefits & Wins")
+                    pros = ai_data.get("pros", [])
+                    if pros:
+                        for i, p in enumerate(pros):
+                            if isinstance(p, dict):
+                                title = p.get("title", f"Benefit {i+1}")
+                                detail = p.get("detail", "")
+                                with st.expander(f"✨ {title}"):
+                                    st.write(detail)
+                            else:
+                                st.info(f"✨ {p}")
+                    else:
+                        st.write("None highlighted for this profile.")
 
-                    with col_c:
-                        st.markdown("#### ⚠️ Cautions & Things to Watch")
-                        cons = ai_data.get("cons", [])
-                        if cons:
-                            for i, c in enumerate(cons):
-                                if isinstance(c, dict):
-                                    title = c.get("title", f"Alert {i+1}")
-                                    detail = c.get("detail", "")
-                                    with st.expander(f"⚡ {title}"):
-                                        st.write(detail)
-                                else:
-                                    st.warning(f"⚡ {c}")
-                        else:
-                            st.write("No major alerts detected.")
+                    st.markdown("#### ⚠️ Cautions & Things to Watch")
+                    cons = ai_data.get("cons", [])
+                    if cons:
+                        for i, c in enumerate(cons):
+                            if isinstance(c, dict):
+                                title = c.get("title", f"Alert {i+1}")
+                                detail = c.get("detail", "")
+                                with st.expander(f"⚡ {title}"):
+                                    st.write(detail)
+                            else:
+                                st.warning(f"⚡ {c}")
+                    else:
+                        st.write("No major alerts detected.")
 
                     st.markdown("---")
                     
