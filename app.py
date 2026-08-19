@@ -384,7 +384,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     return None
 
 @st.cache_data(show_spinner=False, max_entries=20)
-def ai_analyze_product(product_name, ingredients, skin_profile):
+def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, skin_profile):
     pipeline = get_ai_pipeline()
     if not pipeline:
         return None
@@ -393,68 +393,20 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
-    You are a warm, knowledgeable skincare bestie giving a personalized breakdown. 
+    Analyze layering these two products. NEVER repeat their skin profile back to them (No 'Since you have oily skin...').
 
-    CRITICAL RULES:
-    1. NO INGREDIENT NAMES. Never use chemical names like Niacinamide, Retinol, Salicylic Acid, etc. Talk purely about real-world results ("smoothes bumps", "calms redness", "boosts glow").
-    2. THE "NO ECHO" RULE: Do not parrot the user's profile back like a form ("Since you have oily skin..."). Instead, let their profile invisibly shape your advice.
-    3. THE SUMMARY & BREAKDOWN: The 'analysis' section must be a natural, conversational paragraph explaining why this product works for *them specifically* and what it's going to do to their skin vibe, without sounding like a robot checklist.
-    4. THE WASHOUT PERIOD: In the 'usage_protocol', calculate the 'effect_fade_timeline' in plain English (surface = fades in 1-2 days; mid = 1-2 weeks; deep cellular = 4-6 weeks).
+    Product A: {prod_a_name}
+    Ingredients A: {prod_a_ing}
 
-    Profile Context (Use invisibly):
-    - Life Stage: {skin_profile.get('lifestage')}
-    - Skin Type: {skin_profile.get('type')}
-    - Barrier State: {skin_profile.get('barrier')}
-    - Active Medical Conditions: {medical_flags_str}
+    Product B: {prod_b_name}
+    Ingredients B: {prod_b_ing}
 
-    Product: {product_name}
-    Ingredients: {ingredients}
-
-    Return a JSON object with this exact structure:
-    {{
-        "headline": "A punchy, 1-sentence hook about the main vibe/result. NO INGREDIENT NAMES.",
-        "analysis": "A natural, conversational summary explaining how this product interacts with your unique skin state, what kind of transformation to expect, and why it fits your routine. No robotic list-repeating.",
-        "usage_protocol": {{
-            "frequency": "How often to use it (e.g., 'Start just 2 nights a week').",
-            "time_of_day": "Morning, Night, or Both.",
-            "application_step": "Exactly when to apply it.",
-            "time_to_visible_results": "When they'll actually notice a difference.",
-            "effect_fade_timeline": "Plain English explanation of how fast the skin reverts if they stop using this product."
-        }},
-        "pros": [
-            {{"title": "Relatable Benefit 1", "detail": "A real-world result. NO INGREDIENT NAMES."}},
-            {{"title": "Relatable Benefit 2", "detail": "Another great result. NO INGREDIENT NAMES."}}
-        ],
-        "cons": [
-            {{"title": "Relatable Caution 1", "detail": "A real-world warning. NO INGREDIENT NAMES."}},
-            {{"title": "Relatable Caution 2", "detail": "Safety check. NO INGREDIENT NAMES."}}
-        ],
-       "spectrum": {
-            "Day 1": "Initial reaction and hydration feeling.",
-            "Day 3": "How it feels after a few days of adjustment.",
-            "Day 7": "End of week 1, early smoothing.",
-            "Day 14": "Two-week mark, clarity begins.",
-            "Month 1": "One month of consistent use.",
-            "Month 2": "Two month results.",
-            "Month 3": "Three month maturity.",
-            "Month 6": "Half-year mark.",
-            "Year 1": "One year of progress.",
-            "Year 2": "Two year evolution.",
-            "Year 5": "Five years of maintenance.",
-            "Year 10": "Ten year horizon.",
-            "Year 20": "Twenty year longevity.",
-            "Year 50": "Fifty year legacy.",
-            "Year 100": "Lifetime impact."
-        },
-        "medical_sources": [
-            "Mention 2-3 general safety rules simply."
-        ]
-    }}
+    RULE: Speak like a normal human. Do not list chemical names. Just tell them if mixing these will cause a bad reaction (like burning, peeling) or if it's safe and gives a great glow. Give practical advice on which one goes on first.
     """
     
     for step in pipeline:
         try:
-            system_instruction = "You are a warm, relatable human giving personalized skincare breakdowns. Output strictly valid JSON. Never use chemical ingredient names. Never repeat the user's profile back to them."
+            system_instruction = "You are a friendly guide providing practical, jargon-free layering advice. You never repeat the user's profile back to them."
             
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
@@ -463,8 +415,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
                         {"role": "user", "content": prompt}
                     ],
                     model="llama-3.3-70b-versatile",
-                    temperature=0.2, 
-                    response_format={"type": "json_object"}
+                    temperature=0.2
                 )
             else:
                 response = step["client"].chat.completions.create(
@@ -473,10 +424,9 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
                         {"role": "user", "content": prompt}
                     ],
                     model="openrouter/free",
-                    temperature=0.2,
-                    response_format={"type": "json_object"}
+                    temperature=0.2
                 )
-            return json.loads(response.choices[0].message.content)
+            return response.choices[0].message.content
         except Exception:
             continue
     return None
