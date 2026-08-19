@@ -331,10 +331,22 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             {{"title": "Relatable Caution 1", "detail": "A real-world warning. NO INGREDIENT NAMES."}},
             {{"title": "Relatable Caution 2", "detail": "Safety check based on their profile. NO INGREDIENT NAMES."}}
         ],
-        "spectrum": {{
-            "Day 1": "What happens right away.",
-            "Day 3": "How it feels after a few days.",
-            "Day 7": "End of week 1."
+       "spectrum": {
+            "Day 1": "Initial reaction and hydration feeling.",
+            "Day 3": "How it feels after a few days of adjustment.",
+            "Day 7": "End of week 1, early smoothing.",
+            "Day 14": "Two-week mark, clarity begins.",
+            "Month 1": "One month of consistent use.",
+            "Month 2": "Two month results.",
+            "Month 3": "Three month maturity.",
+            "Month 6": "Half-year mark.",
+            "Year 1": "One year of progress.",
+            "Year 2": "Two year evolution.",
+            "Year 5": "Five years of maintenance.",
+            "Year 10": "Ten year horizon.",
+            "Year 20": "Twenty year longevity.",
+            "Year 50": "Fifty year legacy.",
+            "Year 100": "Lifetime impact."
         }},
         "medical_sources": [
             "Mention 2-3 general safety rules simply."
