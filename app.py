@@ -232,7 +232,6 @@ def multi_source_search(query):
     query_lower = query.lower().strip()
     results = []
 
-    # Expanded Specialty Database (Aurodhea, Chogan, and Common Categories)
     curated_specialty_db = [
         {
             "label": "Aurodhea Collagen & Hyaluronic Acid Face Cream",
@@ -276,21 +275,18 @@ def multi_source_search(query):
         }
     ]
 
-    # Search local curated DB
     for item in curated_specialty_db:
         product_title = item.get('label', '')
         if any(token in product_title.lower() for token in query_lower.split()):
             if item not in results:
                 results.append(item)
 
-    # Search Open Beauty Facts API
     url_beauty = f"https://world.openbeautyfacts.org/cgi/search.pl?search_terms={query}&search_simple=1&action=process&json=1&page_size=20"
     registry_results = fetch_registry_data(url_beauty)
     for r in registry_results:
         if r not in results:
             results.append(r)
 
-    # Smart Dynamic Fallback Generator: If query is recognized as a category or specific term (like shampoo, cream, etc.) but no exact match was found, synthesize a valid record so it never returns empty!
     if not results and len(query_lower) > 2:
         results.append({
             "label": f"Synthesized Profile: {query.title()}",
@@ -313,49 +309,96 @@ def parse_ingredient_badges(ingredients_text):
     return found_replenish, found_actives, found_irritants
 
 # -----------------------------------------------------------------------------
-# 4. ROBUST AI ENGINES WITH FALLBACK
+# 4. DYNAMIC FALLBACK & AI ENGINES
 # -----------------------------------------------------------------------------
+def get_dynamic_fallback(product_name, ingredients):
+    p_lower = product_name.lower()
+    if "mask" in p_lower and ("hair" in p_lower or "keratin" in p_lower or "capillary" in p_lower):
+        return {
+            "headline": "An intensive conditioning treatment designed to restructure and smooth hair fibers.",
+            "analysis": f"Based on the formula ({ingredients[:60]}...), this hair mask targets cuticle damage and delivers deep moisture to combat dryness and frizz.",
+            "usage_protocol": {
+                "frequency": "Use once or twice a week after shampooing.",
+                "time_of_day": "During shower or bath routine.",
+                "application_step": "Apply evenly through damp mid-lengths to ends, leave for 5-10 minutes, then rinse.",
+                "time_to_visible_results": "Immediate softness and detangling after the first rinse.",
+                "effect_fade_timeline": "Hair manageability and smoothness gradually taper off over 3-4 days."
+            },
+            "pros": [
+                {"title": "Intense Detangling & Softness", "detail": "Coats hair fibers to make combing effortless and eliminate roughness."},
+                {"title": "Frizz Control & Shine", "detail": "Seals the cuticle to reflect light and keep flyaways under control."}
+            ],
+            "cons": [
+                {"title": "Weigh Down Risk", "detail": "Avoid applying directly to the scalp if you have fine hair to prevent greasiness."},
+                {"title": "Rinse Thoroughly", "detail": "Ensure complete rinsing to prevent product buildup."}
+            ],
+            "spectrum": {
+                "Day 1": "Silky texture and easy detangling.", "Day 3": "Retained moisture and smooth strands.", "Day 7": "Reduced breakage risk during styling.",
+                "Day 14": "Improved overall hair elasticity.", "Month 1": "Visibly healthier ends and natural shine.", "Month 2": "Stronger structural integrity.",
+                "Month 3": "Consistent manageability.", "Month 6": "Resilient hair barrier.", "Year 1": "Long-term hair vitality.",
+                "Year 2": "Lasting strand strength.", "Year 5": "Optimized hair health maintenance.", "Year 10": "Lifetime hair wellness baseline.",
+                "Year 20": "Durable vitality preservation.", "Year 50": "Timeless resilience.", "Year 100": "Ultimate care."
+            },
+            "medical_sources": ["Rinse thoroughly to avoid scalp irritation."]
+        }
+    elif "mask" in p_lower and ("face" in p_lower or "peel" in p_lower or "hyaluronic" in p_lower):
+        return {
+            "headline": "A specialized facial treatment designed to clarify, tighten, and deeply hydrate the skin barrier.",
+            "analysis": f"Using film-formers and moisture-binding agents ({ingredients[:60]}...), this face mask lifts impurities while infusing hydration for a smoother complexion.",
+            "usage_protocol": {
+                "frequency": "Use 1 to 2 times per week on clean skin.",
+                "time_of_day": "Evening routine.",
+                "application_step": "Apply an even layer avoiding eye and lip areas, let dry completely, then gently peel or rinse off.",
+                "time_to_visible_results": "Immediate tightening and a refreshed, glowing surface.",
+                "effect_fade_timeline": "Hydration and surface clarity taper off over 2-3 days."
+            },
+            "pros": [
+                {"title": "Surface Clarifying & Tightening", "detail": "Lifts away dead skin cells and refines pore appearance."},
+                {"title": "Instant Radiance Boost", "detail": "Leaves skin looking energized and exceptionally smooth."}
+            ],
+            "cons": [
+                {"title": "Not for Broken Skin", "detail": "Avoid active breakouts, cuts, or highly sensitive inflamed areas."},
+                {"title": "Potential Dryness", "detail": "Always follow up with a nourishing moisturizer after removal."}
+            ],
+            "spectrum": {
+                "Day 1": "Immediate refreshed clarity and smooth feel.", "Day 3": "Maintained surface smoothness.", "Day 7": "Refined pore texture and balanced glow.",
+                "Day 14": "Clearer skin appearance.", "Month 1": "Consistent skin brightness.", "Month 2": "Balanced sebum and moisture levels.",
+                "Month 3": "Stable skin vitality.", "Month 6": "Resilient barrier maintenance.", "Year 1": "Long-term clarity support.",
+                "Year 2": "Lasting skin radiance.", "Year 5": "Optimized renewal routine.", "Year 10": "Lifetime skin wellness baseline.",
+                "Year 20": "Durable vitality preservation.", "Year 50": "Timeless resilience.", "Year 100": "Ultimate care."
+            },
+            "medical_sources": ["Perform a patch test prior to full facial application."]
+        }
+    else:
+        return {
+            "headline": f"An effective formulation tailored for {product_name}.",
+            "analysis": f"This product utilizes active ingredients ({ingredients[:60]}...) to provide targeted care and support your personal routine.",
+            "usage_protocol": {
+                "frequency": "Use as directed based on your routine.",
+                "time_of_day": "Flexible timing.",
+                "application_step": "Apply cleanly to target area.",
+                "time_to_visible_results": "Noticeable difference within 1-2 weeks.",
+                "effect_fade_timeline": "Benefits gradually fade over 3-5 days if stopped."
+            },
+            "pros": [
+                {"title": "Targeted Care", "detail": "Provides direct support for your specific goals."},
+                {"title": "Comfortable Use", "detail": "Designed for smooth integration into daily care."}
+            ],
+            "cons": [
+                {"title": "Patch Test Recommended", "detail": "Test on a small area first to check compatibility."}
+            ],
+            "spectrum": {
+                "Day 1": "Initial application.", "Day 3": "Adaptation.", "Day 7": "First visible results.",
+                "Day 14": "Two-week mark.", "Month 1": "Consistent integration.", "Month 2": "Stable maintenance.",
+                "Month 3": "Long-term benefit.", "Month 6": "Routine baseline.", "Year 1": "Long-term care."
+            },
+            "medical_sources": ["Follow standard safety guidelines."]
+        }
+
 @st.cache_data(show_spinner=False, max_entries=20)
 def ai_analyze_product(product_name, ingredients, skin_profile):
     pipeline = get_ai_pipeline()
-    
-    fallback_data = {
-        "headline": f"An intensive formulation tailored to nourish and balance your skin and hair.",
-        "analysis": f"This product works in harmony with your biological profile to provide deep hydration, smooth texture, and support overall resilience without feeling heavy or causing congestion.",
-        "usage_protocol": {
-            "frequency": "Use 3 to 4 times a week, or daily if well tolerated.",
-            "time_of_day": "Night or Morning depending on your routine.",
-            "application_step": "Apply after cleansing and before heavier treatments.",
-            "time_to_visible_results": "Noticeable smoothness within 1 to 2 weeks.",
-            "effect_fade_timeline": "Benefits gradually taper off over 3-5 days if discontinued."
-        },
-        "pros": [
-            {"title": "Deep Hydration & Comfort", "detail": "Helps lock in moisture and soften dry or rough areas."},
-            {"title": "Barrier & Structural Support", "detail": "Nourishes to maintain a smooth, healthy appearance."}
-        ],
-        "cons": [
-            {"title": "Initial Patch Test Recommended", "detail": "Always patch test on your inner arm if you have highly reactive skin."},
-            {"title": "Consistency is Key", "detail": "Regular use yields the most stable long-term improvements."}
-        ],
-        "spectrum": {
-            "Day 1": "Immediate soothing and surface hydration.",
-            "Day 3": "Skin feels noticeably softer to the touch.",
-            "Day 7": "Enhanced moisture balance and smooth texture.",
-            "Day 14": "Clearer appearance and sustained barrier health.",
-            "Month 1": "Established radiance and optimal comfort.",
-            "Month 2": "Resilient and balanced condition.",
-            "Month 3": "Long-term structural moisture retention.",
-            "Month 6": "Stable maintenance phase.",
-            "Year 1": "Consistent, healthy wellness maturity.",
-            "Year 2": "Long-term protective care.",
-            "Year 5": "Sustained vitality support.",
-            "Year 10": "Lifetime wellness baseline.",
-            "Year 20": "Durable vitality preservation.",
-            "Year 50": "Timeless resilience.",
-            "Year 100": "Ultimate lifelong care."
-        },
-        "medical_sources": ["Maintain standard daily sun protection and gentle care habits."]
-    }
+    fallback_data = get_dynamic_fallback(product_name, ingredients)
 
     if not pipeline:
         return fallback_data
@@ -363,12 +406,13 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     medical_flags_str = ", ".join(skin_profile.get('medical_flags', [])) if skin_profile.get('medical_flags') else "None reported"
 
     prompt = f"""
-    You are a warm, knowledgeable guide giving a personalized breakdown. 
+    You are a meticulous, knowledgeable skincare and cosmetic chemist giving a personalized breakdown. 
 
     CRITICAL RULES:
-    1. NO INGREDIENT NAMES. Never use chemical names like Niacinamide, Retinol, Sodium Laureth Sulfate, etc. Talk purely about real-world results ("smoothes hair", "calms scalp", "boosts glow").
-    2. THE "NO ECHO" RULE: Do not parrot the user's profile back like a form. Instead, let their profile invisibly shape your advice.
-    3. THE SUMMARY & BREAKDOWN: The 'analysis' section must be a natural, conversational paragraph explaining why this product works for *them specifically*.
+    1. STRICT PRODUCT DIFFERENTIATION: Analyze this exact product ({product_name}) and its specific INCI ingredients. Do NOT confuse face products with hair products or vice versa! A face mask is for facial skin (clarifying/tightening/hydration), while a hair mask is for hair strands (cuticle conditioning/detangling).
+    2. NO INGREDIENT NAMES: Never use chemical names like Polyvinyl Alcohol, Behentrimonium Chloride, Niacinamide, etc. Talk purely about real-world results ("tightens pores", "smooths hair cuticles", "locks in moisture").
+    3. THE "NO ECHO" RULE: Do not parrot the user's profile back like a form. Instead, let their profile invisibly shape your advice.
+    4. THE SUMMARY & BREAKDOWN: The 'analysis' section must be a natural, conversational paragraph explaining why this specific product works for *them specifically*.
 
     Profile Context:
     - Life Stage: {skin_profile.get('lifestage')}
@@ -376,27 +420,27 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     - Barrier State: {skin_profile.get('barrier')}
     - Active Medical Conditions: {medical_flags_str}
 
-    Product: {product_name}
+    Product Name: {product_name}
     Ingredients: {ingredients}
 
     Return a JSON object with this exact structure:
     {{
-        "headline": "A punchy, 1-sentence hook about the main vibe/result. NO INGREDIENT NAMES.",
-        "analysis": "A natural, conversational summary explaining how this product interacts with your unique profile.",
+        "headline": "A punchy, 1-sentence hook about the main vibe/result specific to this product. NO INGREDIENT NAMES.",
+        "analysis": "A natural, conversational summary explaining how this specific product interacts with your unique profile.",
         "usage_protocol": {{
             "frequency": "How often to use it.",
-            "time_of_day": "Morning, Night, or Both.",
-            "application_step": "Exactly when to apply it.",
+            "time_of_day": "Morning, Night, or Shower time.",
+            "application_step": "Exactly when and how to apply it.",
             "time_to_visible_results": "When they'll actually notice a difference.",
             "effect_fade_timeline": "Plain English explanation of how fast results revert if stopped."
         }},
         "pros": [
-            {{"title": "Relatable Benefit 1", "detail": "A real-world result."}},
-            {{"title": "Relatable Benefit 2", "detail": "Another great result."}}
+            {{"title": "Product-Specific Benefit 1", "detail": "A real-world result."}},
+            {{"title": "Product-Specific Benefit 2", "detail": "Another great result."}}
         ],
         "cons": [
-            {{"title": "Relatable Caution 1", "detail": "A real-world warning."}},
-            {{"title": "Relatable Caution 2", "detail": "Safety check."}}
+            {{"title": "Product-Specific Caution 1", "detail": "A real-world warning."}},
+            {{"title": "Product-Specific Caution 2", "detail": "Safety check."}}
         ],
         "spectrum": {{
             "Day 1": "Initial reaction.", "Day 3": "Adjustment.", "Day 7": "End of week 1.",
@@ -411,7 +455,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     
     for step in pipeline:
         try:
-            system_instruction = "You are a warm, relatable human giving personalized breakdowns. Output strictly valid JSON."
+            system_instruction = "You are a warm, highly precise cosmetic chemist giving personalized product breakdowns. Output strictly valid JSON."
             
             if step["client_type"] == "groq":
                 response = step["client"].chat.completions.create(
@@ -420,7 +464,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
                         {"role": "user", "content": prompt}
                     ],
                     model="llama-3.3-70b-versatile",
-                    temperature=0.2, 
+                    temperature=0.1, 
                     response_format={"type": "json_object"}
                 )
             else:
@@ -430,7 +474,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
                         {"role": "user", "content": prompt}
                     ],
                     model="deepseek/deepseek-chat",
-                    temperature=0.2
+                    temperature=0.1
                 )
             
             content = response.choices[0].message.content.strip()
@@ -501,7 +545,7 @@ st.caption("✨ Advanced molecular intelligence engine tailored to your complete
 with st.expander("💡 Welcome to Monad: Decode You! Here is how the concept works:", expanded=False):
     st.markdown("""
     1. **Set Your Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
-    2. **Search or Scan Barcode:** Look up any product by name (e.g., Aurodhea shampoo, Argan oil) or enter a barcode number.
+    2. **Search or Scan Barcode:** Look up any product by name (e.g., Aurodhea face mask, Argan shampoo) or enter a barcode number.
     3. **Plain-Language AI Decoding:** Get clear summaries of product benefits and safety cautions.
     4. **Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to preview long-term milestones.
     5. **Routine Stacking & Saving:** Check if products can be layered safely together and manage your saved routine history.
@@ -564,7 +608,7 @@ with tab_single:
 
     matches = []
     if search_mode == "By Product Name / Category":
-        user_query = st.text_input("Search Product or Category:", placeholder="e.g., Aurodhea shampoo, Argan oil, face cream...")
+        user_query = st.text_input("Search Product or Category:", placeholder="e.g., Aurodhea face mask, Argan shampoo...")
         if user_query:
             with st.spinner("Searching multi-source registries & Aurodhea catalogs..."):
                 matches = multi_source_search(user_query)
@@ -713,7 +757,7 @@ with tab_stack:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        query_a = st.text_input("Product A Name:", placeholder="e.g. Aurodhea Shampoo", key="query_a")
+        query_a = st.text_input("Product A Name:", placeholder="e.g. Aurodhea Face Mask", key="query_a")
         match_a = multi_source_search(query_a) if query_a else []
         selected_a = None
         if match_a:
@@ -722,7 +766,7 @@ with tab_stack:
             selected_a = next(m for m in match_a if m['label'] == sel_a_name)
 
     with col_b:
-        query_b = st.text_input("Product B Name:", placeholder="e.g. Keratin Mask", key="query_b")
+        query_b = st.text_input("Product B Name:", placeholder="e.g. Face Cream", key="query_b")
         match_b = multi_source_search(query_b) if query_b else []
         selected_b = None
         if match_b:
