@@ -211,33 +211,23 @@ def fetch_registry_data(api_url):
 def multi_source_search(query):
     query_lower = query.lower().strip()
     results = []
-
-    curated_specialty_db = [
+curated_specialty_db = [
+        {
+            "label": "Aurodhea Collagen & Hyaluronic Acid Face Cream",
+            "ingredients": "Aqua, Snail Secretion Filtrate, Hydrolyzed Collagen, Sodium Hyaluronate, Prunus Amygdalus Dulcis Oil, Argania Spinosa Kernel Oil, Cetearyl Alcohol, Glycerin, Glyceryl Stearate Citrate, Tocopherol, Xanthan Gum, Benzyl Alcohol, Dehydroacetic Acid, Parfum",
+            "image_url": "https://images.unsplash.com/photo-1608248597359-9d74e31189f7?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+            "label": "Aurodhea Hyaluronic Acid Peel-Off Face Mask",
+            "ingredients": "Aqua, Polyvinyl Alcohol, Alcohol Denat., Glycerin, Sodium Hyaluronate, Aloe Barbadensis Leaf Juice, Panthenol, Phenoxyethanol, Ethylhexylglycerin, Parfum",
+            "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=60"
+        },
         {
             "label": "Advanced Retinol & Bakuchiol Treatment Serum",
             "ingredients": "Water, Glycerin, Caprylic/Capric Triglyceride, Niacinamide, Retinol, Bakuchiol, Polysorbate 20, Panthenol, Ceramide NP, Sodium Hyaluronate, Tocopherol, Allantoin, Xanthan Gum, Ethylhexylglycerin, 1,2-Hexanediol",
             "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
         },
-        {
-            "label": "Holy Hyssop Retinol Renewal Cream",
-            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Butylene Glycol, Caprylic/Capric Triglyceride, Retinol, Niacinamide, Squalane, Panthenol, Madecassoside, Allantoin, Adenosine, Ceramide NP, Sorbitan Stearate",
-            "image_url": "https://images.unsplash.com/photo-1608248597359-9d74e31189f7?w=500&auto=format&fit=crop&q=60"
-        },
-        {
-            "label": "Holy Hyssop Serum",
-            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Dipropylene Glycol, Niacinamide, Butylene Glycol, 1,2-Hexanediol, Panthenol, Hydrolyzed Hyaluronic Acid, Allantoin, Adenosine, Xanthan Gum",
-            "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
-        },
-        {
-            "label": "Red Bean Fresh Cleanser",
-            "ingredients": "Glycerin, Phaseolus Angularis Seed Powder, Water, Sodium Cocoyl Isethionate, Coco-Betaine, Sodium Methyl Cocoyl Taurate, Potassium Cocoyl Glycinate, Propanediol, Glyceryl Stearate",
-            "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=60"
-        },
-        {
-            "label": "French Green Cleanser Cake",
-            "ingredients": "Glycerin, Sorbitol, Stearic Acid, Myristic Acid, Lauric Acid, Potassium Hydroxide, Water, Olea Europaea Fruit Oil, Simmondsia Chinensis Seed Oil, Green Tea Extract, Centella Asiatica Extract",
-            "image_url": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=500&auto=format&fit=crop&q=60"
-        }
+        # ... keep your other existing items here
     ]
 
     for item in curated_specialty_db:
