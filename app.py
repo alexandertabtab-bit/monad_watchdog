@@ -179,7 +179,7 @@ if "saved_routine" not in st.session_state:
     st.session_state["saved_routine"] = []
 
 # -----------------------------------------------------------------------------
-# 3. INGREDIENT RETRIEVAL PIPELINE (WITH IMAGE EXTRACTION)
+# 3. INGREDIENT RETRIEVAL PIPELINE (WITH CHOGAN & AURODHEA INTEGRATION)
 # -----------------------------------------------------------------------------
 @st.cache_data(ttl=300, max_entries=50) 
 def fetch_registry_data(api_url):
@@ -209,8 +209,9 @@ def fetch_registry_data(api_url):
     return []
 
 def multi_source_search(query):
-    # Make sure all lines inside this function are indented by 4 spaces
-    
+    query_lower = query.lower().strip()
+    results = []
+
     curated_specialty_db = [
         {
             "label": "Aurodhea Collagen & Hyaluronic Acid Face Cream",
@@ -221,19 +222,40 @@ def multi_source_search(query):
             "label": "Aurodhea Hyaluronic Acid Peel-Off Face Mask",
             "ingredients": "Aqua, Polyvinyl Alcohol, Alcohol Denat., Glycerin, Sodium Hyaluronate, Aloe Barbadensis Leaf Juice, Panthenol, Phenoxyethanol, Ethylhexylglycerin, Parfum",
             "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+            "label": "Advanced Retinol & Bakuchiol Treatment Serum",
+            "ingredients": "Water, Glycerin, Caprylic/Capric Triglyceride, Niacinamide, Retinol, Bakuchiol, Polysorbate 20, Panthenol, Ceramide NP, Sodium Hyaluronate, Tocopherol, Allantoin, Xanthan Gum, Ethylhexylglycerin, 1,2-Hexanediol",
+            "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+            "label": "Holy Hyssop Retinol Renewal Cream",
+            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Butylene Glycol, Caprylic/Capric Triglyceride, Retinol, Niacinamide, Squalane, Panthenol, Madecassoside, Allantoin, Adenosine, Ceramide NP, Sorbitan Stearate",
+            "image_url": "https://images.unsplash.com/photo-1608248597359-9d74e31189f7?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+            "label": "Holy Hyssop Serum",
+            "ingredients": "Hyssopus Officinalis Extract, Glycerin, Dipropylene Glycol, Niacinamide, Butylene Glycol, 1,2-Hexanediol, Panthenol, Hydrolyzed Hyaluronic Acid, Allantoin, Adenosine, Xanthan Gum",
+            "image_url": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+            "label": "Red Bean Fresh Cleanser",
+            "ingredients": "Glycerin, Phaseolus Angularis Seed Powder, Water, Sodium Cocoyl Isethionate, Coco-Betaine, Sodium Methyl Cocoyl Taurate, Potassium Cocoyl Glycinate, Propanediol, Glyceryl Stearate",
+            "image_url": "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&auto=format&fit=crop&q=60"
+        },
+        {
+            "label": "French Green Cleanser Cake",
+            "ingredients": "Glycerin, Sorbitol, Stearic Acid, Myristic Acid, Lauric Acid, Potassium Hydroxide, Water, Olea Europaea Fruit Oil, Simmondsia Chinensis Seed Oil, Green Tea Extract, Centella Asiatica Extract",
+            "image_url": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=500&auto=format&fit=crop&q=60"
         }
     ]
-    
-    # This loop must line up vertically with the 'curated_specialty_db' definition above it
-    for item in curated_specialty_db:
-        if query.lower() in item["label"].lower():
-            # Your matching logic here
-            pass
 
     for item in curated_specialty_db:
-        if any(token in item['label'].lower() for token in query_lower.split()):
+        product_title = item.get('label', item.get('name', ''))
+        if any(token in product_title.lower() for token in query_lower.split()):
             if item not in results:
                 results.append(item)
+
     if "retinol" in query_lower and not results:
         results = curated_specialty_db
 
@@ -282,7 +304,6 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
         return None
 
     medical_flags_str = ", ".join(skin_profile.get('medical_flags', [])) if skin_profile.get('medical_flags') else "None reported"
-    medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
     You are a warm, knowledgeable skincare bestie giving a personalized breakdown. 
@@ -378,9 +399,6 @@ def ai_check_compatibility(prod_a_name, prod_a_ing, prod_b_name, prod_b_ing, ski
     pipeline = get_ai_pipeline()
     if not pipeline:
         return None
-
-    medical_flags_str = ", ".join(skin_profile.get('medical_flags', [])) if skin_profile.get('medical_flags') else "None reported"
-    medications_str = skin_profile.get('medications', 'None reported')
 
     prompt = f"""
     Analyze layering these two products. NEVER repeat their skin profile back to them (No 'Since you have oily skin...').
@@ -492,7 +510,7 @@ tab_single, tab_stack, tab_routine = st.tabs(["🔍 Product Analysis", "🔄 Rou
 with tab_single:
     st.markdown("### 🔍 Step 2: Product Search & Barcode Input")
     
-    user_query = st.text_input("Search Product:", placeholder="e.g. Retinol Treatment...")
+    user_query = st.text_input("Search Product (e.g., Aurodhea Collagen...):", placeholder="Type product name...")
 
     with st.expander("📸 Optional: Scan Barcode via Camera"):
         camera_photo = st.camera_input("Take a photo of the product barcode", label_visibility="collapsed")
@@ -510,7 +528,6 @@ with tab_single:
             
             st.markdown("---")
             
-            # --- PRODUCT IMAGE DISPLAY ---
             img_col1, img_col2 = st.columns([1, 2])
             with img_col1:
                 if selected_product.get('image_url'):
@@ -639,7 +656,7 @@ with tab_stack:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        query_a = st.text_input("Product A Name:", placeholder="e.g. Retinol Treatment", key="query_a")
+        query_a = st.text_input("Product A Name:", placeholder="e.g. Aurodhea Collagen", key="query_a")
         match_a = multi_source_search(query_a) if query_a else []
         selected_a = None
         if match_a:
@@ -666,29 +683,30 @@ with tab_stack:
                     user_profile
                 )
                 if report:
-                    st.markdown(report)
+                    st.markdown("### 📋 Stacking & Layering Report")
+                    st.write(report)
 
 # -----------------------------------------------------------------------------
-# TAB 3: SAVED ROUTINE HISTORY
+# TAB 3: MY SAVED ROUTINE
 # -----------------------------------------------------------------------------
 with tab_routine:
-    st.markdown("### 📚 Your Saved Routine & History")
-    st.caption("Access all your bookmarked products in one place without needing to re-search.")
-
+    st.markdown("### 📚 Your Saved Routine Stack")
+    
     if not st.session_state["saved_routine"]:
-        st.info("No products saved yet. Search for a product in the 'Product Analysis' tab and click **'Save to My Routine'**!")
+        st.info("You haven't saved any products yet! Search for items in the 'Product Analysis' tab and click 'Save to My Routine'.")
     else:
-        for idx, item in enumerate(st.session_state["saved_routine"]):
-            with st.expander(f"🧴 {item['label']}"):
-                if item.get('image_url'):
-                    st.image(item['image_url'], width=100)
-                st.markdown(f"**Ingredients:**")
-                st.caption(item['ingredients'])
-                if st.button("🗑️ Remove from Routine", key=f"remove_{idx}"):
-                    st.session_state["saved_routine"].pop(idx)
-                    st.rerun()
-
-        st.markdown("---")
-        if st.button("🧹 Clear All Saved Routine History"):
+        for idx, prod in enumerate(st.session_state["saved_routine"], 1):
+            with st.container():
+                rc1, rc2 = st.columns([4, 1])
+                with rc1:
+                    st.markdown(f"**{idx}. {prod['label']}**")
+                    st.caption(f"INCI: {prod['ingredients'][:120]}...")
+                with rc2:
+                    if st.button("Remove", key=f"remove_{idx}"):
+                        st.session_state["saved_routine"].pop(idx - 1)
+                        st.rerun()
+            st.divider()
+        
+        if st.button("🗑️ Clear Entire Routine"):
             st.session_state["saved_routine"] = []
             st.rerun()
