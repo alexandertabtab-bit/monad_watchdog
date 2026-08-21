@@ -333,11 +333,11 @@ def get_dynamic_fallback(product_name, ingredients):
                 {"title": "Rinse Thoroughly", "detail": "Ensure complete rinsing to prevent product buildup."}
             ],
             "spectrum": {
-                "Day 1": "Silky texture and easy detangling.", "Day 3": "Retained moisture and smooth strands.", "Day 7": "Reduced breakage risk during styling.",
-                "Day 14": "Improved overall hair elasticity.", "Month 1": "Visibly healthier ends and natural shine.", "Month 2": "Stronger structural integrity.",
-                "Month 3": "Consistent manageability.", "Month 6": "Resilient hair barrier.", "Year 1": "Long-term hair vitality.",
-                "Year 2": "Lasting strand strength.", "Year 5": "Optimized hair health maintenance.", "Year 10": "Lifetime hair wellness baseline.",
-                "Year 20": "Durable vitality preservation.", "Year 50": "Timeless resilience.", "Year 100": "Ultimate care."
+                "Immediate First Wash": "Silky texture, effortless detangling, and relaxed frizz right after rinsing.",
+                "After 24 Hours": "Retained strand moisture and soft touchability.",
+                "After 1 Week (2 Uses)": "Noticeably less friction and easier styling during morning brushing.",
+                "After 2 Weeks": "Reduced split-end brittleness and improved fiber elasticity.",
+                "After 1 Month": "Consistently smooth texture and protected structural integrity."
             },
             "medical_sources": ["Rinse thoroughly to avoid scalp irritation."]
         }
@@ -361,11 +361,11 @@ def get_dynamic_fallback(product_name, ingredients):
                 {"title": "Potential Dryness", "detail": "Always follow up with a nourishing moisturizer after removal."}
             ],
             "spectrum": {
-                "Day 1": "Immediate refreshed clarity and smooth feel.", "Day 3": "Maintained surface smoothness.", "Day 7": "Refined pore texture and balanced glow.",
-                "Day 14": "Clearer skin appearance.", "Month 1": "Consistent skin brightness.", "Month 2": "Balanced sebum and moisture levels.",
-                "Month 3": "Stable skin vitality.", "Month 6": "Resilient barrier maintenance.", "Year 1": "Long-term clarity support.",
-                "Year 2": "Lasting skin radiance.", "Year 5": "Optimized renewal routine.", "Year 10": "Lifetime skin wellness baseline.",
-                "Year 20": "Durable vitality preservation.", "Year 50": "Timeless resilience.", "Year 100": "Ultimate care."
+                "Immediate Application": "Instant tightening sensation, clean surface feel, and smooth glow upon removal.",
+                "After 24 Hours": "Balanced surface touch and clear pores.",
+                "After 1 Week (2 Uses)": "Refined skin texture and less visible surface oiliness.",
+                "After 2 Weeks": "Smoother makeup application and more even complexion.",
+                "After 1 Month": "Stable skin clarity and maintained moisture balance."
             },
             "medical_sources": ["Perform a patch test prior to full facial application."]
         }
@@ -388,9 +388,11 @@ def get_dynamic_fallback(product_name, ingredients):
                 {"title": "Patch Test Recommended", "detail": "Test on a small area first to check compatibility."}
             ],
             "spectrum": {
-                "Day 1": "Initial application.", "Day 3": "Adaptation.", "Day 7": "First visible results.",
-                "Day 14": "Two-week mark.", "Month 1": "Consistent integration.", "Month 2": "Stable maintenance.",
-                "Month 3": "Long-term benefit.", "Month 6": "Routine baseline.", "Year 1": "Long-term care."
+                "Immediate Application": "Initial product contact and surface feel.",
+                "After 24 Hours": "Initial skin or hair adjustment.",
+                "After 1 Week": "First noticeable benefits and integration into routine.",
+                "After 2 Weeks": "Stabilized comfort and noticeable performance.",
+                "After 1 Month": "Consistent routine baseline and sustained results."
             },
             "medical_sources": ["Follow standard safety guidelines."]
         }
@@ -412,7 +414,7 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     1. STRICT PRODUCT DIFFERENTIATION: Analyze this exact product ({product_name}) and its specific INCI ingredients. Do NOT confuse face products with hair products or vice versa! A face mask is for facial skin (clarifying/tightening/hydration), while a hair mask is for hair strands (cuticle conditioning/detangling).
     2. NO INGREDIENT NAMES: Never use chemical names like Polyvinyl Alcohol, Behentrimonium Chloride, Niacinamide, etc. Talk purely about real-world results ("tightens pores", "smooths hair cuticles", "locks in moisture").
     3. THE "NO ECHO" RULE: Do not parrot the user's profile back like a form. Instead, let their profile invisibly shape your advice.
-    4. THE SUMMARY & BREAKDOWN: The 'analysis' section must be a natural, conversational paragraph explaining why this specific product works for *them specifically*.
+    4. REALISTIC SHORT-TERM SPECTRUM: The 'spectrum' object must contain exactly 5 realistic short-term milestones: "Immediate Application", "After 24 Hours", "After 1 Week", "After 2 Weeks", and "After 1 Month". Make these descriptions *completely specific* to whether this is a face mask, hair mask, shampoo, or cream. Do not use generic filler.
 
     Profile Context:
     - Life Stage: {skin_profile.get('lifestage')}
@@ -443,11 +445,11 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             {{"title": "Product-Specific Caution 2", "detail": "Safety check."}}
         ],
         "spectrum": {{
-            "Day 1": "Initial reaction.", "Day 3": "Adjustment.", "Day 7": "End of week 1.",
-            "Day 14": "Two-week mark.", "Month 1": "One month.", "Month 2": "Two months.",
-            "Month 3": "Three months.", "Month 6": "Half-year.", "Year 1": "One year.",
-            "Year 2": "Two years.", "Year 5": "Five years.", "Year 10": "Ten years.",
-            "Year 20": "Twenty years.", "Year 50": "Fifty years.", "Year 100": "Lifetime."
+            "Immediate Application": "Specific result right after use.",
+            "After 24 Hours": "Result 1 day later.",
+            "After 1 Week": "Result after 1 week.",
+            "After 2 Weeks": "Result after 2 weeks.",
+            "After 1 Month": "Result after 1 month."
         }},
         "medical_sources": ["General safety rule."]
     }}
@@ -547,7 +549,7 @@ with st.expander("💡 Welcome to Monad: Decode You! Here is how the concept wor
     1. **Set Your Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
     2. **Search or Scan Barcode:** Look up any product by name (e.g., Aurodhea face mask, Argan shampoo) or enter a barcode number.
     3. **Plain-Language AI Decoding:** Get clear summaries of product benefits and safety cautions.
-    4. **Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to preview long-term milestones.
+    4. **Short-Term Spectrum:** Drag the interactive slider from **Immediate to 1 Month** to preview results over time.
     5. **Routine Stacking & Saving:** Check if products can be layered safely together and manage your saved routine history.
     """)
 
@@ -682,7 +684,7 @@ with tab_single:
                     if isinstance(p, dict):
                         title = p.get("title", f"Benefit {i+1}")
                         detail = p.get("detail", "")
-                        with st.expander(f"✨ {title}"):
+                        with st.expander(f"✨ {title} "):
                             st.write(detail)
                     else:
                         st.info(f"✨ {p}")
@@ -708,12 +710,12 @@ with tab_single:
             with st.expander("📖 Read Simple Summary & Breakdown", expanded=False):
                 st.write(ai_data.get("analysis", ""))
 
-            st.markdown("### ⏳ Customized Longevity Spectrum")
+            st.markdown("### ⏳ Product Timeline & Progression")
             spectrum_data = ai_data.get("spectrum", {})
             if spectrum_data:
                 timeframes = list(spectrum_data.keys())
                 selected_time = st.select_slider(
-                    "Slide to view long-term biological impact tailored to your profile:",
+                    "Slide to view expected results over time:",
                     options=timeframes,
                     value=timeframes[0],
                     key="spectrum_slider" 
@@ -721,7 +723,7 @@ with tab_single:
                 st.markdown(
                     f"""
                     <div style="background-color: rgba(255, 255, 255, 0.85); border: 1px solid #f3e5f5; border-radius: 10px; padding: 15px; margin-top: 10px;">
-                        <span style="color: #4a4045; font-weight: 600;">{selected_time} Impact:</span> 
+                        <span style="color: #4a4045; font-weight: 600;">{selected_time}:</span> 
                         <span style="color: #4a4045;">{spectrum_data[selected_time]}</span>
                     </div>
                     """,
