@@ -54,7 +54,7 @@ def create_japanese_pastel_bg_base64(width=1920, height=1080):
             local_p = (percentage - 0.5) * 2.0
             r = int(color_pink[0] + (color_green[0] - color_pink[0]) * local_p)
             g = int(color_pink[1] + (color_green[1] - color_pink[1]) * local_p)
-            b = int(color_pink[2] + (color_green[2] - color_pink[2]) * local_p)
+            b = int(color_pink[2] + (color_green[2] - color_green[2]) * local_p)
         draw.line([(0, y), (width, y)], fill=(r, g, b))
 
     overlay = Image.new("RGBA", (width, height), (0, 0, 0, 0))
@@ -313,7 +313,45 @@ def parse_ingredient_badges(ingredients_text):
 # -----------------------------------------------------------------------------
 def get_dynamic_fallback(product_name, ingredients):
     p_lower = product_name.lower()
-    if "mask" in p_lower and ("hair" in p_lower or "keratin" in p_lower or "capillary" in p_lower):
+    if "retinol" in p_lower or "serum" in p_lower or "bakuchiol" in p_lower:
+        return {
+            "headline": "A potent cellular renewal treatment designed to stimulate collagen and refine skin texture.",
+            "analysis": f"Using active retinoids and barrier-supporting agents ({ingredients[:60]}...), this serum accelerates cellular turnover to smooth fine lines and even skin tone over time.",
+            "usage_protocol": {
+                "frequency": "Use 2 to 3 times per week initially, building up to nightly use as tolerated.",
+                "time_of_day": "Evening routine only.",
+                "application_step": "Apply a pea-sized amount to clean, completely dry skin before heavier creams.",
+                "time_to_visible_results": "Initial texture refinement within 2 to 4 weeks; deeper anti-aging benefits in 2 to 3 months.",
+                "effect_fade_timeline": "Cellular turnover stimulation gradually reverts to baseline over 3-4 weeks if discontinued."
+            },
+            "pros": [
+                {"title": "Accelerated Cell Turnover", "detail": "Promotes fresh epidermal growth to clear dullness and smooth texture."},
+                {"title": "Collagen Remodeling", "detail": "Stimulates structural proteins to firm skin and reduce fine lines."}
+            ],
+            "cons": [
+                {"title": "Initial Retinization / Purging", "detail": "May cause mild peeling, dryness, or temporary breakouts during the first few weeks."},
+                {"title": "Sun Sensitivity", "detail": "Significantly increases UV vulnerability; daily sunscreen is mandatory."}
+            ],
+            "spectrum": {
+                "Day 1": "Initial active contact; mild tingling may occur as skin encounters the retinoid.",
+                "Day 3": "Beginning of cellular adjustment; potential light flaking or skin tightness.",
+                "Day 7": "Skin begins adapting to active stimulation; surface tactile changes emerge.",
+                "Day 14": "Subsurface adaptation underway; initial clearing of skin tone.",
+                "Month 1": "Noticeable smoothness, brighter radiance, and refined pore appearance.",
+                "Month 2": "Softer fine lines and more even epidermal tone as turnover normalizes.",
+                "Month 3": "Significant collagen stimulation and enhanced structural firmness.",
+                "Month 6": "Deeper structural remodeling; sustained reduction in stubborn textural irregularities.",
+                "Year 1": "Optimized cellular turnover baseline and long-term anti-aging defense.",
+                "Year 2": "Sustained barrier resilience and long-term elasticity maintenance.",
+                "Year 5": "Compounding long-term anti-aging preservation in skin density.",
+                "Year 10": "Lifelong youthful skin texture support baseline.",
+                "Year 20": "Advanced structural vitality maintenance.",
+                "Year 50": "Timeless resilience preservation.",
+                "Year 100": "Ultimate skin longevity standard."
+            },
+            "medical_sources": ["Always pair with broad-spectrum SPF during daytime use."]
+        }
+    elif "mask" in p_lower and ("hair" in p_lower or "keratin" in p_lower or "capillary" in p_lower):
         return {
             "headline": "An intensive conditioning treatment designed to restructure and smooth hair fibers.",
             "analysis": f"Based on the formula ({ingredients[:60]}...), this hair mask targets cuticle damage and delivers deep moisture to combat dryness and frizz.",
@@ -333,11 +371,21 @@ def get_dynamic_fallback(product_name, ingredients):
                 {"title": "Rinse Thoroughly", "detail": "Ensure complete rinsing to prevent product buildup."}
             ],
             "spectrum": {
-                "Immediate First Wash": "Silky texture, effortless detangling, and relaxed frizz right after rinsing.",
-                "After 24 Hours": "Retained strand moisture and soft touchability.",
-                "After 1 Week (2 Uses)": "Noticeably less friction and easier styling during morning brushing.",
-                "After 2 Weeks": "Reduced split-end brittleness and improved fiber elasticity.",
-                "After 1 Month": "Consistently smooth texture and protected structural integrity."
+                "Day 1": "Silky texture, effortless detangling, and smooth shine right after rinsing.",
+                "Day 3": "Retained strand moisture and soft touchability.",
+                "Day 7": "Noticeably less friction and easier styling during weekly brushing.",
+                "Day 14": "Reduced split-end brittleness and improved fiber elasticity.",
+                "Month 1": "Consistently smooth texture and protected structural integrity.",
+                "Month 2": "Enhanced manageability and stronger strand resilience.",
+                "Month 3": "Stabilized hair health with minimized breakage.",
+                "Month 6": "Long-term cuticle protection and sustained hair vitality.",
+                "Year 1": "Consistent maintenance of healthy, long hair integrity.",
+                "Year 2": "Established robust hair care routine baseline.",
+                "Year 5": "Optimized long-term hair conditioning maintenance.",
+                "Year 10": "Lifelong hair strength preservation.",
+                "Year 20": "Durable vitality maintenance.",
+                "Year 50": "Timeless resilience.",
+                "Year 100": "Ultimate care."
             },
             "medical_sources": ["Rinse thoroughly to avoid scalp irritation."]
         }
@@ -361,11 +409,21 @@ def get_dynamic_fallback(product_name, ingredients):
                 {"title": "Potential Dryness", "detail": "Always follow up with a nourishing moisturizer after removal."}
             ],
             "spectrum": {
-                "Immediate Application": "Instant tightening sensation, clean surface feel, and smooth glow upon removal.",
-                "After 24 Hours": "Balanced surface touch and clear pores.",
-                "After 1 Week (2 Uses)": "Refined skin texture and less visible surface oiliness.",
-                "After 2 Weeks": "Smoother makeup application and more even complexion.",
-                "After 1 Month": "Stable skin clarity and maintained moisture balance."
+                "Day 1": "Instant tightening sensation, clean surface feel, and smooth glow upon removal.",
+                "Day 3": "Balanced surface touch and clear pores.",
+                "Day 7": "Refined skin texture and less visible surface oiliness after weekly use.",
+                "Day 14": "Smoother makeup application and more even complexion.",
+                "Month 1": "Stable skin clarity and maintained moisture balance.",
+                "Month 2": "Consistent radiance and refined pore texture.",
+                "Month 3": "Established skin clarity routine baseline.",
+                "Month 6": "Resilient barrier maintenance and long-term clarity support.",
+                "Year 1": "Long-term skin wellness maintenance.",
+                "Year 2": "Lasting skin radiance routine.",
+                "Year 5": "Optimized renewal routine support.",
+                "Year 10": "Lifetime skin wellness baseline.",
+                "Year 20": "Durable vitality preservation.",
+                "Year 50": "Timeless resilience.",
+                "Year 100": "Ultimate care."
             },
             "medical_sources": ["Perform a patch test prior to full facial application."]
         }
@@ -388,11 +446,21 @@ def get_dynamic_fallback(product_name, ingredients):
                 {"title": "Patch Test Recommended", "detail": "Test on a small area first to check compatibility."}
             ],
             "spectrum": {
-                "Immediate Application": "Initial product contact and surface feel.",
-                "After 24 Hours": "Initial skin or hair adjustment.",
-                "After 1 Week": "First noticeable benefits and integration into routine.",
-                "After 2 Weeks": "Stabilized comfort and noticeable performance.",
-                "After 1 Month": "Consistent routine baseline and sustained results."
+                "Day 1": "Initial product contact and surface feel.",
+                "Day 3": "Initial adjustment phase.",
+                "Day 7": "First noticeable benefits and integration into routine.",
+                "Day 14": "Stabilized comfort and performance.",
+                "Month 1": "Consistent routine baseline and sustained results.",
+                "Month 2": "Ongoing performance maintenance.",
+                "Month 3": "Long-term benefit integration.",
+                "Month 6": "Established routine stability.",
+                "Year 1": "Long-term care support.",
+                "Year 2": "Lasting maintenance.",
+                "Year 5": "Optimized routine.",
+                "Year 10": "Lifetime baseline.",
+                "Year 20": "Durable vitality.",
+                "Year 50": "Timeless resilience.",
+                "Year 100": "Ultimate care."
             },
             "medical_sources": ["Follow standard safety guidelines."]
         }
@@ -411,10 +479,10 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
     You are a meticulous, knowledgeable skincare and cosmetic chemist giving a personalized breakdown. 
 
     CRITICAL RULES:
-    1. STRICT PRODUCT DIFFERENTIATION: Analyze this exact product ({product_name}) and its specific INCI ingredients. Do NOT confuse face products with hair products or vice versa! A face mask is for facial skin (clarifying/tightening/hydration), while a hair mask is for hair strands (cuticle conditioning/detangling).
-    2. NO INGREDIENT NAMES: Never use chemical names like Polyvinyl Alcohol, Behentrimonium Chloride, Niacinamide, etc. Talk purely about real-world results ("tightens pores", "smooths hair cuticles", "locks in moisture").
+    1. STRICT PRODUCT DIFFERENTIATION: Analyze this exact product ({product_name}) and its specific INCI ingredients. Retinoids/serums require a long-term anti-aging and cell-turnover progression (Months/Years), while masks and shampoos focus on immediate to medium-term conditioning or clarifying.
+    2. NO INGREDIENT NAMES: Never use chemical names like Polyvinyl Alcohol, Behentrimonium Chloride, Niacinamide, Retinol, etc. Talk purely about real-world results ("tightens pores", "smooths hair cuticles", "accelerates cell turnover", "locks in moisture").
     3. THE "NO ECHO" RULE: Do not parrot the user's profile back like a form. Instead, let their profile invisibly shape your advice.
-    4. REALISTIC SHORT-TERM SPECTRUM: The 'spectrum' object must contain exactly 5 realistic short-term milestones: "Immediate Application", "After 24 Hours", "After 1 Week", "After 2 Weeks", and "After 1 Month". Make these descriptions *completely specific* to whether this is a face mask, hair mask, shampoo, or cream. Do not use generic filler.
+    4. FULL MULTI-YEAR SPECTRUM: The 'spectrum' object must contain *all* 15 progression keys: "Day 1", "Day 3", "Day 7", "Day 14", "Month 1", "Month 2", "Month 3", "Month 6", "Year 1", "Year 2", "Year 5", "Year 10", "Year 20", "Year 50", and "Year 100". Make these descriptions *completely specific* to the product type (e.g. retinoids must map out purging, retinization, collagen remodeling, and long-term anti-aging over years).
 
     Profile Context:
     - Life Stage: {skin_profile.get('lifestage')}
@@ -445,11 +513,10 @@ def ai_analyze_product(product_name, ingredients, skin_profile):
             {{"title": "Product-Specific Caution 2", "detail": "Safety check."}}
         ],
         "spectrum": {{
-            "Immediate Application": "Specific result right after use.",
-            "After 24 Hours": "Result 1 day later.",
-            "After 1 Week": "Result after 1 week.",
-            "After 2 Weeks": "Result after 2 weeks.",
-            "After 1 Month": "Result after 1 month."
+            "Day 1": "...", "Day 3": "...", "Day 7": "...", "Day 14": "...", 
+            "Month 1": "...", "Month 2": "...", "Month 3": "...", "Month 6": "...", 
+            "Year 1": "...", "Year 2": "...", "Year 5": "...", "Year 10": "...", 
+            "Year 20": "...", "Year 50": "...", "Year 100": "..."
         }},
         "medical_sources": ["General safety rule."]
     }}
@@ -547,9 +614,9 @@ st.caption("✨ Advanced molecular intelligence engine tailored to your complete
 with st.expander("💡 Welcome to Monad: Decode You! Here is how the concept works:", expanded=False):
     st.markdown("""
     1. **Set Your Profile:** Input your skin type, life stage, medications, and medical sensitivities below.
-    2. **Search or Scan Barcode:** Look up any product by name (e.g., Aurodhea face mask, Argan shampoo) or enter a barcode number.
+    2. **Search or Scan Barcode:** Look up any product by name (e.g., Aurodhea face mask, Retinol serum) or enter a barcode number.
     3. **Plain-Language AI Decoding:** Get clear summaries of product benefits and safety cautions.
-    4. **Short-Term Spectrum:** Drag the interactive slider from **Immediate to 1 Month** to preview results over time.
+    4. **Longevity Spectrum:** Drag the interactive slider from **Day 1 to Year 100** to preview long-term biological impact.
     5. **Routine Stacking & Saving:** Check if products can be layered safely together and manage your saved routine history.
     """)
 
@@ -610,9 +677,9 @@ with tab_single:
 
     matches = []
     if search_mode == "By Product Name / Category":
-        user_query = st.text_input("Search Product or Category:", placeholder="e.g., Aurodhea face mask, Argan shampoo...")
+        user_query = st.text_input("Search Product or Category:", placeholder="e.g., Aurodhea face mask, Retinol serum...")
         if user_query:
-            with st.spinner("Searching multi-source registries & Aurodhea catalogs..."):
+            with st.spinner("Searching multi-source registries & catalogs..."):
                 matches = multi_source_search(user_query)
     else:
         barcode_input = st.text_input("Enter Barcode Digits (e.g., UPC / EAN):", placeholder="Type barcode number here...")
@@ -684,7 +751,7 @@ with tab_single:
                     if isinstance(p, dict):
                         title = p.get("title", f"Benefit {i+1}")
                         detail = p.get("detail", "")
-                        with st.expander(f"✨ {title} "):
+                        with st.expander(f"✨ {title}"):
                             st.write(detail)
                     else:
                         st.info(f"✨ {p}")
@@ -710,12 +777,12 @@ with tab_single:
             with st.expander("📖 Read Simple Summary & Breakdown", expanded=False):
                 st.write(ai_data.get("analysis", ""))
 
-            st.markdown("### ⏳ Product Timeline & Progression")
+            st.markdown("### ⏳ Customized Longevity Spectrum")
             spectrum_data = ai_data.get("spectrum", {})
             if spectrum_data:
                 timeframes = list(spectrum_data.keys())
                 selected_time = st.select_slider(
-                    "Slide to view expected results over time:",
+                    "Slide to view long-term biological impact tailored to your profile:",
                     options=timeframes,
                     value=timeframes[0],
                     key="spectrum_slider" 
@@ -723,7 +790,7 @@ with tab_single:
                 st.markdown(
                     f"""
                     <div style="background-color: rgba(255, 255, 255, 0.85); border: 1px solid #f3e5f5; border-radius: 10px; padding: 15px; margin-top: 10px;">
-                        <span style="color: #4a4045; font-weight: 600;">{selected_time}:</span> 
+                        <span style="color: #4a4045; font-weight: 600;">{selected_time} Impact:</span> 
                         <span style="color: #4a4045;">{spectrum_data[selected_time]}</span>
                     </div>
                     """,
@@ -759,7 +826,7 @@ with tab_stack:
     col_a, col_b = st.columns(2)
     
     with col_a:
-        query_a = st.text_input("Product A Name:", placeholder="e.g. Aurodhea Face Mask", key="query_a")
+        query_a = st.text_input("Product A Name:", placeholder="e.g. Retinol Serum", key="query_a")
         match_a = multi_source_search(query_a) if query_a else []
         selected_a = None
         if match_a:
